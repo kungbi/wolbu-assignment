@@ -23,7 +23,8 @@
 
 ## 3. API 사용 예시
 
-- 회원가입: `POST /api/members`
+- 회원가입: `POST /api/auth/signup`
+- 로그인: `POST /api/auth/login`
 - 강의등록: `POST /api/courses` (강사만 가능)
 - 강의목록: `GET /api/courses?sort=RECENT&page=1&size=20`
 - 수강신청: `POST /api/enrollments` (다건 신청 가능)
@@ -37,7 +38,13 @@
 - 강의 정원 선착순 보장
 - 중복 신청 불가(회원-강의 unique)
 
-## 5. 에러 응답 규격
+## 5. 인증 규격
+
+- 회원가입(signup): 토큰 미발급, 사용자 정보만 반환
+- 로그인(login): Access Token은 응답 body(`accessToken`), Refresh Token은 HttpOnly 쿠키(`refreshToken`)
+- 토큰 스키마: JWT HS256, payload에 `sub`(userId), `email`, `role`
+
+## 6. 에러 응답 규격
 
 - **형식**: JSON `{ "status": 409, "code": "COURSE_FULL", "message": "정원이 초과되었습니다." }`
 - 공통 코드 예시:
@@ -47,7 +54,7 @@
   - 404: 리소스 없음
   - 409: 정원 초과·중복 신청
 
-## 6. 테스트
+## 7. 테스트
 
 - 실행: `./gradlew test`
 - 커버 범위:
@@ -57,7 +64,7 @@
   - 정원 초과/중복 신청
   - 동시성 테스트 (여러 요청 → 정원 초과 없음 확인)
 
-## 7. 폴더 구조
+## 8. 폴더 구조
 
 ```
 src/main/java/com/example/woolbu
