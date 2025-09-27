@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -14,8 +15,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ApiResponse<Void>> handleDomain(DomainException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        // 특정 도메인 예외에 대해 적절한 HTTP 상태 코드 반환
+        HttpStatus status = getHttpStatusForDomainException(e);
+        return ResponseEntity.status(status)
                 .body(ApiResponse.failure(e.code(), e.getMessage()));
+    }
+
+    private HttpStatus getHttpStatusForDomainException(DomainException e) {
+        switch (e.code()) {
+            case "MEMBER_NOT_FOUND":
+            case "LECTURE_NOT_FOUND":
+                return HttpStatus.NOT_FOUND;
+            case "INSTRUCTOR_ONLY":
+            case "INVALID_TOKEN":
+            case "INSUFFICIENT_ROLE":
+                return HttpStatus.FORBIDDEN;
+            case "LOGIN_FAILED":
+            case "REFRESH_TOKEN_INVALID":
+            case "REFRESH_TOKEN_EXPIRED":
+                return HttpStatus.UNAUTHORIZED;
+            default:
+                return HttpStatus.BAD_REQUEST;
+        }
     }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
@@ -44,6 +65,17 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.failure("VALIDATION_ERROR", message));
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingRequestHeader(MissingRequestHeaderException e) {
+        String headerName = e.getHeaderName();
+        if ("Authorization".equals(headerName)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.failure("MISSING_AUTH_HEADER", "인증 토큰이 필요합니다."));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.failure("MISSING_HEADER", "필수 헤더가 누락되었습니다: " + headerName));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
