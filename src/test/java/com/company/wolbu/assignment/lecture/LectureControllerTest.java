@@ -113,7 +113,7 @@ class LectureControllerTest {
                 .header("Authorization", "Bearer invalid_token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestJson))
-                .andExpect(status().isForbidden())
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("INVALID_TOKEN"));
     }
@@ -129,7 +129,7 @@ class LectureControllerTest {
         mockMvc.perform(post("/api/lectures")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestJson))
-                .andExpect(status().isForbidden())
+                .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("INVALID_TOKEN"));
     }
