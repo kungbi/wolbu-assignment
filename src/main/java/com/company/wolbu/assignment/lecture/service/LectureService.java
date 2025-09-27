@@ -8,7 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.company.wolbu.assignment.auth.domain.Member;
 import com.company.wolbu.assignment.auth.repository.MemberRepository;
-import com.company.wolbu.assignment.common.exception.DomainException;
+import com.company.wolbu.assignment.enrollment.exception.MemberNotFoundException;
+import com.company.wolbu.assignment.lecture.exception.InstructorOnlyException;
+import com.company.wolbu.assignment.lecture.exception.InvalidLectureDataException;
+import com.company.wolbu.assignment.lecture.exception.LectureNotFoundException;
 import com.company.wolbu.assignment.lecture.domain.Lecture;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureRequest;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureResponse;
@@ -37,7 +40,7 @@ public class LectureService {
      * @param memberId 요청한 회원 ID
      * @param request 강의 개설 요청 정보
      * @return 생성된 강의 정보
-     * @throws DomainException 회원을 찾을 수 없거나 강사가 아닌 경우
+     * @throws NotFoundException 회원을 찾을 수 없거나 강사가 아닌 경우
      */
     @Transactional
     public CreateLectureResponse createLecture(Long memberId, CreateLectureRequest request) {
@@ -45,12 +48,12 @@ public class LectureService {
         
         // 1. 회원 존재 여부 확인
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "회원을 찾을 수 없습니다."));
+                .orElseThrow(() -> new MemberNotFoundException(memberId));
         
         // 2. 강사 권한 확인
         if (!member.isInstructor()) {
             log.warn("강의 개설 권한 없음: memberId={}, role={}", memberId, member.getRole());
-            throw new DomainException("INSTRUCTOR_ONLY", "강의는 강사만 개설할 수 있습니다.");
+            throw new InstructorOnlyException();
         }
         
         // 3. 강의 생성 및 저장
@@ -77,7 +80,7 @@ public class LectureService {
             
         } catch (IllegalArgumentException e) {
             log.error("강의 생성 실패 - 유효성 검증 오류: {}", e.getMessage());
-            throw new DomainException("INVALID_LECTURE_DATA", e.getMessage());
+            throw new InvalidLectureDataException(e.getMessage());
         }
     }
 
@@ -86,12 +89,12 @@ public class LectureService {
      * 
      * @param lectureId 강의 ID
      * @return 강의 정보
-     * @throws DomainException 강의를 찾을 수 없는 경우
+     * @throws NotFoundException 강의를 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
     public CreateLectureResponse getLecture(Long lectureId) {
         Lecture lecture = lectureRepository.findById(lectureId)
-                .orElseThrow(() -> new DomainException("LECTURE_NOT_FOUND", "강의를 찾을 수 없습니다."));
+                .orElseThrow(() -> new LectureNotFoundException(lectureId));
         
         return new CreateLectureResponse(
             lecture.getId(),

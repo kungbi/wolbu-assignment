@@ -16,7 +16,11 @@ import com.company.wolbu.assignment.auth.repository.MemberRepository;
 import com.company.wolbu.assignment.auth.repository.RefreshTokenRepository;
 import com.company.wolbu.assignment.auth.security.JwtProvider;
 import com.company.wolbu.assignment.auth.security.PasswordPolicy;
-import com.company.wolbu.assignment.common.exception.DomainException;
+import com.company.wolbu.assignment.auth.exception.DuplicateEmailException;
+import com.company.wolbu.assignment.auth.exception.InvalidCredentialsException;
+import com.company.wolbu.assignment.auth.exception.InvalidPasswordPolicyException;
+import com.company.wolbu.assignment.auth.exception.TokenExpiredException;
+import com.company.wolbu.assignment.enrollment.exception.MemberNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,12 +36,11 @@ public class AuthService {
     @Transactional
     public SignUpResponse signUp(SignUpRequest req) {
         if (!PasswordPolicy.isValid(req.getPassword())) {
-            throw new DomainException("INVALID_PASSWORD_POLICY", 
+            throw new InvalidPasswordPolicyException(
                 "비밀번호는 6~10자, 영문 대소문자와 숫자 중 2종 이상 조합이어야 합니다.");
         }
         if (memberRepository.existsByEmail(req.getEmail())) {
-            throw new DomainException("EMAIL_DUPLICATE", 
-                "이미 가입된 이메일입니다. 다른 이메일을 사용해주세요.");
+            throw new DuplicateEmailException("이미 가입된 이메일입니다. 다른 이메일을 사용해주세요.");
         }
 
         String hash = passwordEncoder.encode(req.getPassword());
@@ -51,9 +54,9 @@ public class AuthService {
     @Transactional
     public AuthResult login(LoginRequest req) {
         Member member = memberRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new DomainException("LOGIN_FAILED", "이메일 또는 비밀번호가 올바르지 않습니다."));
+                .orElseThrow(() -> new InvalidCredentialsException());
         if (!passwordEncoder.matches(req.getPassword(), member.getPasswordHash())) {
-            throw new DomainException("LOGIN_FAILED", "이메일 또는 비밀번호가 올바르지 않습니다.");
+            throw new InvalidCredentialsException();
         }
 
         String access = jwtProvider.generateAccessToken(member.getId(), member.getEmail(), member.getRole());
@@ -73,7 +76,7 @@ public class AuthService {
     public AuthResult refreshToken(String refreshToken) {
         // 1. refresh token이 DB에 존재하는지 확인
         RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
-                .orElseThrow(() -> new DomainException("REFRESH_TOKEN_INVALID", "유효하지 않은 리프레시 토큰입니다."));
+                .orElseThrow(() -> new TokenExpiredException("유효하지 않은 리프레시 토큰입니다."));
 
         // 2. refresh token 파싱하여 사용자 ID 확인
         try {
@@ -82,7 +85,7 @@ public class AuthService {
             
             // 3. 사용자 정보 조회
             Member member = memberRepository.findById(userId)
-                    .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "사용자를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new MemberNotFoundException(userId));
 
             // 4. 새로운 access token과 refresh token 생성
             String newAccess = jwtProvider.generateAccessToken(member.getId(), member.getEmail(), member.getRole());
@@ -100,9 +103,7 @@ public class AuthService {
         } catch (Exception e) {
             // JWT 파싱 실패 시 refresh token 삭제
             refreshTokenRepository.delete(token);
-            throw new DomainException("REFRESH_TOKEN_EXPIRED", "리프레시 토큰이 만료되었습니다. 다시 로그인해주세요.");
+            throw new TokenExpiredException();
         }
     }
 }
-
-

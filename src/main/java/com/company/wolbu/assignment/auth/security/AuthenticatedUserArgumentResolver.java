@@ -8,7 +8,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import com.company.wolbu.assignment.auth.domain.MemberRole;
-import com.company.wolbu.assignment.common.exception.DomainException;
+import com.company.wolbu.assignment.auth.exception.InvalidTokenException;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,7 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
         String authorization = webRequest.getHeader("Authorization");
         
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            throw new DomainException("INVALID_TOKEN", "유효하지 않은 인증 토큰입니다.");
+            throw new InvalidTokenException();
         }
         
         String token = authorization.substring(7); // "Bearer " 제거
@@ -52,7 +52,7 @@ public class AuthenticatedUserArgumentResolver implements HandlerMethodArgumentR
             
         } catch (Exception e) {
             log.warn("JWT 토큰 파싱 실패: {}", e.getMessage());
-            throw new DomainException("INVALID_TOKEN", "유효하지 않은 인증 토큰입니다.");
+            throw new InvalidTokenException();
         }
     }
 }

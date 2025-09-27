@@ -66,7 +66,7 @@ class AuthServiceTest {
                 .build();
 
         assertThatThrownBy(() -> authService.signUp(s2))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(com.company.wolbu.assignment.auth.exception.DuplicateEmailException.class)
                 .hasMessageContaining("이미 가입된 이메일");
     }
 
@@ -101,7 +101,7 @@ class AuthServiceTest {
     @Test
     void refreshToken_invalid_token_fails() {
         assertThatThrownBy(() -> authService.refreshToken("invalid-token"))
-                .isInstanceOf(DomainException.class)
+                .isInstanceOf(com.company.wolbu.assignment.auth.exception.TokenExpiredException.class)
                 .hasMessageContaining("유효하지 않은 리프레시 토큰");
     }
 

@@ -18,38 +18,16 @@ import com.company.wolbu.assignment.common.dto.ApiResponse;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(DomainException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDomain(DomainException e) {
-        // 특정 도메인 예외에 대해 적절한 HTTP 상태 코드 반환
-        HttpStatus status = getHttpStatusForDomainException(e);
-        return ResponseEntity.status(status)
-                .body(ApiResponse.failure(e.code(), e.getMessage()));
+    /**
+     * 커스텀 비즈니스 예외 처리
+     * 각 예외에서 정의한 HTTP 상태 코드와 에러 코드를 사용합니다.
+     */
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
+        return ResponseEntity.status(e.httpStatus())
+                .body(ApiResponse.failure(e.errorCode(), e.getMessage()));
     }
 
-    private HttpStatus getHttpStatusForDomainException(DomainException e) {
-        switch (e.code()) {
-            case "MEMBER_NOT_FOUND":
-            case "LECTURE_NOT_FOUND":
-            case "ENROLLMENT_NOT_FOUND":
-                return HttpStatus.NOT_FOUND;
-            case "INSTRUCTOR_ONLY":
-            case "INVALID_TOKEN":
-            case "INSUFFICIENT_ROLE":
-            case "UNAUTHORIZED_ENROLLMENT":
-                return HttpStatus.FORBIDDEN;
-            case "LOGIN_FAILED":
-            case "REFRESH_TOKEN_INVALID":
-            case "REFRESH_TOKEN_EXPIRED":
-                return HttpStatus.UNAUTHORIZED;
-            case "COURSE_FULL":
-            case "DUPLICATE_ENROLLMENT":
-            case "ALREADY_ENROLLED_ACTIVE":
-            case "ALREADY_CANCELED":
-                return HttpStatus.CONFLICT;
-            default:
-                return HttpStatus.BAD_REQUEST;
-        }
-    }
 
     @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
     public ResponseEntity<ApiResponse<Void>> handleValidation(Exception e) {

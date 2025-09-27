@@ -6,7 +6,7 @@ import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
 
 import com.company.wolbu.assignment.auth.domain.MemberRole;
-import com.company.wolbu.assignment.common.exception.DomainException;
+import com.company.wolbu.assignment.auth.exception.InsufficientRoleException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,7 +36,7 @@ public class RoleCheckAspect {
         
         if (authenticatedUser == null) {
             log.error("@RequireRole 어노테이션을 사용하려면 메서드 파라미터에 AuthenticatedUser가 있어야 합니다.");
-            throw new DomainException("INTERNAL_ERROR", "권한 검증 설정 오류입니다.");
+            throw new RuntimeException("권한 검증 설정 오류입니다.");
         }
         
         MemberRole requiredRole = requireRole.value();
@@ -48,7 +48,7 @@ public class RoleCheckAspect {
             log.warn("권한 부족: 사용자 역할={}, 필요 역할={}, 사용자ID={}", 
                 authenticatedUser.getRole(), requiredRole, authenticatedUser.getMemberId());
             
-            throw new DomainException("INSUFFICIENT_ROLE", message);
+            throw new InsufficientRoleException(message);
         }
         
         log.debug("권한 검증 통과: 사용자 역할={}, 필요 역할={}", 
