@@ -1,5 +1,8 @@
 package com.company.wolbu.assignment.lecture.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,6 +12,8 @@ import com.company.wolbu.assignment.exception.DomainException;
 import com.company.wolbu.assignment.lecture.domain.Lecture;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureRequest;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureResponse;
+import com.company.wolbu.assignment.lecture.dto.LectureListResponse;
+import com.company.wolbu.assignment.lecture.dto.LectureSortType;
 import com.company.wolbu.assignment.lecture.repository.LectureRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -108,5 +113,40 @@ public class LectureService {
     @Transactional(readOnly = true)
     public boolean hasInstructorPermission(Long lectureId, Long instructorId) {
         return lectureRepository.findByIdAndInstructorId(lectureId, instructorId).isPresent();
+    }
+
+    /**
+     * 강의 목록 조회 (페이징 및 정렬)
+     * 
+     * @param page 페이지 번호 (1부터 시작)
+     * @param size 페이지 크기 (기본값 20, 최대 100)
+     * @param sortType 정렬 타입
+     * @return 강의 목록 페이지
+     */
+    @Transactional(readOnly = true)
+    public Page<LectureListResponse> getLectureList(Integer page, Integer size, LectureSortType sortType) {
+        // 페이지 번호 검증 (1부터 시작, 0으로 변환)
+        int pageNumber = (page != null && page > 0) ? page - 1 : 0;
+        
+        // 페이지 크기 검증 (기본값 20, 최대 100)
+        int pageSize = (size != null && size > 0) ? Math.min(size, 100) : 20;
+        
+        // 정렬 타입 기본값 설정
+        LectureSortType sort = (sortType != null) ? sortType : LectureSortType.RECENT;
+        
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        
+        log.info("강의 목록 조회: page={}, size={}, sort={}", pageNumber + 1, pageSize, sort);
+        
+        // 정렬 타입에 따른 조회
+        switch (sort) {
+            case POPULAR_COUNT:
+                return lectureRepository.findAllWithEnrollmentCountOrderByEnrollmentCount(pageable);
+            case POPULAR_RATE:
+                return lectureRepository.findAllWithEnrollmentCountOrderByEnrollmentRate(pageable);
+            case RECENT:
+            default:
+                return lectureRepository.findAllWithEnrollmentCountOrderByCreatedAt(pageable);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.company.wolbu.assignment.lecture.controller;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.company.wolbu.assignment.auth.domain.MemberRole;
@@ -15,6 +17,8 @@ import com.company.wolbu.assignment.auth.security.RequireRole;
 import com.company.wolbu.assignment.dto.ApiResponse;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureRequest;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureResponse;
+import com.company.wolbu.assignment.lecture.dto.LectureListResponse;
+import com.company.wolbu.assignment.lecture.dto.LectureSortType;
 import com.company.wolbu.assignment.lecture.service.LectureService;
 
 import jakarta.validation.Valid;
@@ -53,6 +57,26 @@ public class LectureController {
         CreateLectureResponse response = lectureService.createLecture(user.getMemberId(), request);
         
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * 강의 목록 조회
+     * 
+     * @param page 페이지 번호 (1부터 시작, 기본값: 1)
+     * @param size 페이지 크기 (기본값: 20, 최대: 100)
+     * @param sort 정렬 방식 (RECENT, POPULAR_COUNT, POPULAR_RATE)
+     * @return 강의 목록 페이지
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<LectureListResponse>>> getLectureList(
+            @RequestParam(value = "page", defaultValue = "1") Integer page,
+            @RequestParam(value = "size", defaultValue = "20") Integer size,
+            @RequestParam(value = "sort", defaultValue = "RECENT") LectureSortType sort) {
+        
+        log.info("강의 목록 조회 API 호출: page={}, size={}, sort={}", page, size, sort);
+        
+        Page<LectureListResponse> lectureList = lectureService.getLectureList(page, size, sort);
+        return ResponseEntity.ok(ApiResponse.success(lectureList));
     }
 
     /**

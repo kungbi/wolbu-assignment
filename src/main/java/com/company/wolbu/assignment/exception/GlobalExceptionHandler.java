@@ -1,5 +1,6 @@
 package com.company.wolbu.assignment.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
@@ -25,15 +26,22 @@ public class GlobalExceptionHandler {
         switch (e.code()) {
             case "MEMBER_NOT_FOUND":
             case "LECTURE_NOT_FOUND":
+            case "ENROLLMENT_NOT_FOUND":
                 return HttpStatus.NOT_FOUND;
             case "INSTRUCTOR_ONLY":
             case "INVALID_TOKEN":
             case "INSUFFICIENT_ROLE":
+            case "UNAUTHORIZED_ENROLLMENT":
                 return HttpStatus.FORBIDDEN;
             case "LOGIN_FAILED":
             case "REFRESH_TOKEN_INVALID":
             case "REFRESH_TOKEN_EXPIRED":
                 return HttpStatus.UNAUTHORIZED;
+            case "COURSE_FULL":
+            case "DUPLICATE_ENROLLMENT":
+            case "ALREADY_ENROLLED_ACTIVE":
+            case "ALREADY_CANCELED":
+                return HttpStatus.CONFLICT;
             default:
                 return HttpStatus.BAD_REQUEST;
         }
@@ -58,6 +66,8 @@ public class GlobalExceptionHandler {
                     message = "휴대폰 번호를 입력해주세요.";
                 } else if ("role".equals(field)) {
                     message = "회원 유형을 선택해주세요.";
+                } else if ("lectureIds".equals(field)) {
+                    message = "신청할 강의를 선택해주세요.";
                 } else {
                     message = defaultMessage != null ? defaultMessage : message;
                 }
@@ -78,10 +88,22 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure("MISSING_HEADER", "필수 헤더가 누락되었습니다: " + headerName));
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        // Unique 제약 위반 (중복 신청) 처리
+        if (e.getMessage() != null && e.getMessage().contains("uk_enrollment_lecture_member")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.failure("DUPLICATE_ENROLLMENT", "이미 신청한 강의입니다."));
+        }
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.failure("DATA_INTEGRITY_ERROR", "데이터 무결성 오류가 발생했습니다."));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.failure("INVALID_INPUT", "입력값이 올바르지 않습니다."));
+                .body(ApiResponse.failure("INVALID_INPUT", e.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

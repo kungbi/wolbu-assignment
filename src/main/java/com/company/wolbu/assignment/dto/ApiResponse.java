@@ -82,4 +82,25 @@ public class ApiResponse<T> {
                         .build())
                 .build();
     }
+    
+    /**
+     * 에러와 함께 데이터도 포함하는 응답 생성
+     * 부분적 성공/실패 상황에서 사용
+     * 
+     * @param code 에러 코드
+     * @param message 에러 메시지
+     * @param data 응답 데이터
+     * @param <T> 데이터 타입
+     * @return 에러 응답 (데이터 포함)
+     */
+    public static <T> ApiResponse<T> error(String code, String message, T data) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .data(data)
+                .error(ErrorInfo.builder()
+                        .code(code)
+                        .message(message)
+                        .build())
+                .build();
+    }
 }
