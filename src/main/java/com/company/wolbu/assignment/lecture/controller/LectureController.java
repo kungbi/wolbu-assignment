@@ -15,6 +15,15 @@ import com.company.wolbu.assignment.auth.domain.MemberRole;
 import com.company.wolbu.assignment.auth.security.AuthenticatedUser;
 import com.company.wolbu.assignment.auth.security.RequireRole;
 import com.company.wolbu.assignment.common.dto.ApiResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureRequest;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureResponse;
 import com.company.wolbu.assignment.lecture.dto.LectureListResponse;
@@ -33,18 +42,40 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/lectures")
 @Validated
 @RequiredArgsConstructor
+@Tag(name = "강의 API", description = "강의 개설, 조회, 목록 조회를 위한 API")
 public class LectureController {
 
     private final LectureService lectureService;
 
-    /**
-     * 강의 개설
-     * @RequireRole 어노테이션을 통해 강사만 접근 가능하도록 제한합니다.
-     * 
-     * @param user 인증된 사용자 정보 (JWT 토큰에서 자동 추출)
-     * @param request 강의 개설 요청 정보
-     * @return 생성된 강의 정보
-     */
+    @Operation(
+        summary = "강의 개설",
+        description = "새로운 강의를 개설합니다. 강사 권한이 필요합니다.",
+        security = @SecurityRequirement(name = "bearerAuth"),
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "강의 개설 정보",
+            required = true,
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = CreateLectureRequest.class),
+                examples = @ExampleObject(
+                    name = "강의 개설 예시",
+                    value = """
+                        {
+                            "title": "Spring Boot 마스터 클래스",
+                            "maxCapacity": 30,
+                            "price": 150000
+                        }
+                        """
+                )
+            )
+        )
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "강의 개설 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 검증 실패"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "강사 권한 필요")
+    })
     @PostMapping
     @RequireRole(value = MemberRole.INSTRUCTOR, message = "강의는 강사만 개설할 수 있습니다.")
     public ResponseEntity<ApiResponse<CreateLectureResponse>> createLecture(
@@ -59,14 +90,20 @@ public class LectureController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    /**
-     * 강의 목록 조회
-     * 
-     * @param page 페이지 번호 (1부터 시작, 기본값: 1)
-     * @param size 페이지 크기 (기본값: 20, 최대: 100)
-     * @param sort 정렬 방식 (RECENT, POPULAR_COUNT, POPULAR_RATE)
-     * @return 강의 목록 페이지
-     */
+    @Operation(
+        summary = "강의 목록 조회",
+        description = "페이징과 정렬 옵션을 지원하는 강의 목록을 조회합니다. 인증 없이 접근 가능합니다.",
+        parameters = {
+            @Parameter(name = "page", description = "페이지 번호 (1부터 시작)", example = "1"),
+            @Parameter(name = "size", description = "페이지 크기 (최대 100)", example = "20"),
+            @Parameter(name = "sort", description = "정렬 방식", example = "RECENT",
+                schema = @Schema(implementation = LectureSortType.class))
+        }
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "강의 목록 조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 파라미터")
+    })
     @GetMapping
     public ResponseEntity<ApiResponse<Page<LectureListResponse>>> getLectureList(
             @RequestParam(value = "page", defaultValue = "1") Integer page,
@@ -79,12 +116,15 @@ public class LectureController {
         return ResponseEntity.ok(ApiResponse.success(lectureList));
     }
 
-    /**
-     * 강의 정보 조회
-     * 
-     * @param lectureId 조회할 강의 ID
-     * @return 강의 정보
-     */
+    @Operation(
+        summary = "강의 상세 조회",
+        description = "강의 ID로 특정 강의의 상세 정보를 조회합니다. 인증 없이 접근 가능합니다.",
+        parameters = @Parameter(name = "lectureId", description = "강의 ID", example = "1", required = true)
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "강의 조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "강의를 찾을 수 없음")
+    })
     @GetMapping("/{lectureId}")
     public ResponseEntity<ApiResponse<CreateLectureResponse>> getLecture(@PathVariable Long lectureId) {
         log.info("강의 조회 API 호출: lectureId={}", lectureId);

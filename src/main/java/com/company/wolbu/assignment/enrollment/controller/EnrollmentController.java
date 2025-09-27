@@ -4,6 +4,15 @@ import com.company.wolbu.assignment.auth.domain.MemberRole;
 import com.company.wolbu.assignment.auth.security.AuthenticatedUser;
 import com.company.wolbu.assignment.auth.security.RequireRole;
 import com.company.wolbu.assignment.common.dto.ApiResponse;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.company.wolbu.assignment.enrollment.dto.EnrollmentRequest;
 import com.company.wolbu.assignment.enrollment.dto.EnrollmentResponse;
 import com.company.wolbu.assignment.enrollment.dto.EnrollmentResult;
@@ -30,17 +39,39 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/enrollments")
 @Validated
 @RequiredArgsConstructor
+@Tag(name = "수강 신청 API", description = "강의 수강 신청, 취소, 조회를 위한 API")
 public class EnrollmentController {
 
     private final EnrollmentService enrollmentService;
 
-    /**
-     * 강의 신청 여러 강의를 동시에 신청할 수 있습니다.
-     *
-     * @param user    인증된 사용자 정보
-     * @param request 신청할 강의 목록
-     * @return 신청 결과 (성공/실패 목록)
-     */
+    @Operation(
+        summary = "강의 수강 신청",
+        description = "여러 강의를 동시에 신청할 수 있습니다. 수강생 권한이 필요하며, 정원 초과 시 선착순으로 처리됩니다.",
+        security = @SecurityRequirement(name = "bearerAuth"),
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            description = "신청할 강의 ID 목록",
+            required = true,
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = EnrollmentRequest.class),
+                examples = @ExampleObject(
+                    name = "수강 신청 예시",
+                    value = """
+                        {
+                            "lectureIds": [1, 2, 3]
+                        }
+                        """
+                )
+            )
+        )
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신청 처리 완료 (부분 성공 포함)"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 검증 실패"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "수강생 권한 필요"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "정원 초과 또는 중복 신청")
+    })
     @PostMapping
     @RequireRole(value = MemberRole.STUDENT, message = "수강 신청은 수강생만 할 수 있습니다.")
     public ResponseEntity<ApiResponse<EnrollmentResult>> enrollInLectures(
@@ -66,12 +97,16 @@ public class EnrollmentController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
-    /**
-     * 내 수강 신청 목록 조회
-     *
-     * @param user 인증된 사용자 정보
-     * @return 수강 신청 목록
-     */
+    @Operation(
+        summary = "내 수강 신청 목록 조회",
+        description = "로그인한 사용자의 수강 신청 목록을 조회합니다. 수강생 권한이 필요합니다.",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "수강생 권한 필요")
+    })
     @GetMapping("/my")
     @RequireRole(value = MemberRole.STUDENT, message = "수강 신청 목록은 수강생만 조회할 수 있습니다.")
     public ResponseEntity<ApiResponse<List<EnrollmentResponse>>> getMyEnrollments(
@@ -83,13 +118,19 @@ public class EnrollmentController {
         return ResponseEntity.ok(ApiResponse.success(enrollments));
     }
 
-    /**
-     * 수강 신청 취소
-     *
-     * @param user         인증된 사용자 정보
-     * @param enrollmentId 취소할 수강 신청 ID
-     * @return 취소 결과
-     */
+    @Operation(
+        summary = "수강 신청 취소",
+        description = "본인의 수강 신청을 취소합니다. 소프트 삭제로 처리되어 재수강이 가능합니다.",
+        security = @SecurityRequirement(name = "bearerAuth"),
+        parameters = @Parameter(name = "enrollmentId", description = "취소할 수강 신청 ID", example = "1", required = true)
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "취소 성공"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "수강생 권한 필요 또는 본인 신청이 아님"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "수강 신청을 찾을 수 없음"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 취소된 신청")
+    })
     @DeleteMapping("/{enrollmentId}")
     @RequireRole(value = MemberRole.STUDENT, message = "수강 신청 취소는 수강생만 할 수 있습니다.")
     public ResponseEntity<ApiResponse<Void>> cancelEnrollment(

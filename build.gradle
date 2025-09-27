@@ -35,8 +35,8 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 	// Spring Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	// OpenAPI/Swagger UI
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+	// OpenAPI/Swagger UI (Spring Boot 3.5.x 최신 호환 버전)
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.h2database:h2'
 	annotationProcessor 'org.projectlombok:lombok'
