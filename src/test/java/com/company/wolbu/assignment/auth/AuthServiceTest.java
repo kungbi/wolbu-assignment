@@ -28,7 +28,7 @@ class AuthServiceTest {
         SignUpRequest s = new SignUpRequestBuilder()
                 .name("홍길동")
                 .email("hong@example.com")
-                .phone("010-1234-5678")
+                .phone("01012345678")
                 .password("Abc123")
                 .role(MemberRole.STUDENT)
                 .build();
@@ -51,7 +51,7 @@ class AuthServiceTest {
         SignUpRequest s1 = new SignUpRequestBuilder()
                 .name("A")
                 .email("dup@example.com")
-                .phone("010-0000-0000")
+                .phone("01000000000")
                 .password("Abc123")
                 .role(MemberRole.STUDENT)
                 .build();
@@ -60,7 +60,7 @@ class AuthServiceTest {
         SignUpRequest s2 = new SignUpRequestBuilder()
                 .name("B")
                 .email("dup@example.com")
-                .phone("010-1111-1111")
+                .phone("01011111111")
                 .password("Abc123")
                 .role(MemberRole.STUDENT)
                 .build();
@@ -76,7 +76,7 @@ class AuthServiceTest {
         SignUpRequest s = new SignUpRequestBuilder()
                 .name("홍길동")
                 .email("hong@example.com")
-                .phone("010-1234-5678")
+                .phone("01012345678")
                 .password("Abc123")
                 .role(MemberRole.STUDENT)
                 .build();

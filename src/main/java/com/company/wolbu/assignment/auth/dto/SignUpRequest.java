@@ -15,19 +15,19 @@ import lombok.Getter;
 public class SignUpRequest {
 
     @NotBlank(message = "이름을 입력해주세요.")
-    @Size(max = 50, message = "이름은 50자 이하로 입력해주세요.")
-    @Schema(description = "회원 이름", example = "홍길동", maxLength = 50)
+    @Size(max = 20, message = "이름은 20자 이하로 입력해주세요.")
+    @Schema(description = "회원 이름", example = "홍길동", maxLength = 20)
     private String name;
 
     @NotBlank(message = "이메일을 입력해주세요.")
     @Email(message = "올바른 이메일 형식이 아닙니다.")
-    @Size(max = 120, message = "이메일은 120자 이하로 입력해주세요.")
-    @Schema(description = "이메일 주소", example = "hong@example.com", maxLength = 120)
+    @Size(max = 100, message = "이메일은 100자 이하로 입력해주세요.")
+    @Schema(description = "이메일 주소", example = "hong@example.com", maxLength = 100)
     private String email;
 
     @NotBlank(message = "휴대폰 번호를 입력해주세요.")
-    @Size(max = 20, message = "휴대폰 번호는 20자 이하로 입력해주세요.")
-    @Schema(description = "휴대폰 번호", example = "010-1234-5678", maxLength = 20)
+    @Pattern(regexp = "^010\\d{8}$", message = "휴대폰 번호는 010으로 시작하는 11자리 숫자여야 합니다.")
+    @Schema(description = "휴대폰 번호", example = "01012345678", maxLength = 11)
     private String phone;
 
     @NotBlank(message = "비밀번호를 입력해주세요.")

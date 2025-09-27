@@ -52,7 +52,7 @@ public class AuthController {
                         {
                             "name": "홍길동",
                             "email": "hong@example.com",
-                            "phone": "010-1234-5678",
+                            "phone": "01012345678",
                             "password": "Password123!",
                             "role": "STUDENT"
                         }
