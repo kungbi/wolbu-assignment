@@ -16,7 +16,7 @@ import com.company.wolbu.assignment.enrollment.dto.EnrollmentRequest;
 import com.company.wolbu.assignment.enrollment.dto.EnrollmentResponse;
 import com.company.wolbu.assignment.enrollment.dto.EnrollmentResult;
 import com.company.wolbu.assignment.enrollment.repository.EnrollmentRepository;
-import com.company.wolbu.assignment.exception.DomainException;
+import com.company.wolbu.assignment.common.exception.DomainException;
 import com.company.wolbu.assignment.lecture.domain.Lecture;
 import com.company.wolbu.assignment.lecture.repository.LectureRepository;
 

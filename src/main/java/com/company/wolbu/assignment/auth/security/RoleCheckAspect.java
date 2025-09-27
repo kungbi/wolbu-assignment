@@ -6,7 +6,7 @@ import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
 
 import com.company.wolbu.assignment.auth.domain.MemberRole;
-import com.company.wolbu.assignment.exception.DomainException;
+import com.company.wolbu.assignment.common.exception.DomainException;
 
 import lombok.extern.slf4j.Slf4j;
 

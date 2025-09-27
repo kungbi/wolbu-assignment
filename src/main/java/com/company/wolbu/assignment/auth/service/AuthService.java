@@ -16,7 +16,7 @@ import com.company.wolbu.assignment.auth.repository.MemberRepository;
 import com.company.wolbu.assignment.auth.repository.RefreshTokenRepository;
 import com.company.wolbu.assignment.auth.security.JwtProvider;
 import com.company.wolbu.assignment.auth.security.PasswordPolicy;
-import com.company.wolbu.assignment.exception.DomainException;
+import com.company.wolbu.assignment.common.exception.DomainException;
 
 import lombok.RequiredArgsConstructor;
 

@@ -1,4 +1,4 @@
-package com.company.wolbu.assignment.exception;
+package com.company.wolbu.assignment.common.exception;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -9,8 +9,12 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.company.wolbu.assignment.dto.ApiResponse;
+import com.company.wolbu.assignment.common.dto.ApiResponse;
 
+/**
+ * 전역 예외 처리기
+ * 애플리케이션 전반에서 발생하는 예외를 일관된 형식으로 처리합니다.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -122,5 +126,3 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.failure("INTERNAL_ERROR", "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."));
     }
 }
-
-

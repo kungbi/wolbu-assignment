@@ -3,7 +3,7 @@ package com.company.wolbu.assignment.enrollment.controller;
 import com.company.wolbu.assignment.auth.domain.MemberRole;
 import com.company.wolbu.assignment.auth.security.AuthenticatedUser;
 import com.company.wolbu.assignment.auth.security.RequireRole;
-import com.company.wolbu.assignment.dto.ApiResponse;
+import com.company.wolbu.assignment.common.dto.ApiResponse;
 import com.company.wolbu.assignment.enrollment.dto.EnrollmentRequest;
 import com.company.wolbu.assignment.enrollment.dto.EnrollmentResponse;
 import com.company.wolbu.assignment.enrollment.dto.EnrollmentResult;

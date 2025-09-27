@@ -1,6 +1,6 @@
 package com.company.wolbu.assignment.health.controller;
 
-import com.company.wolbu.assignment.dto.ApiResponse;
+import com.company.wolbu.assignment.common.dto.ApiResponse;
 import com.company.wolbu.assignment.health.dto.HealthStatusDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;

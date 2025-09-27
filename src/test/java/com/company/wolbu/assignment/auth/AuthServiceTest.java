@@ -14,7 +14,7 @@ import com.company.wolbu.assignment.auth.dto.LoginRequest;
 import com.company.wolbu.assignment.auth.dto.SignUpRequest;
 import com.company.wolbu.assignment.auth.dto.SignUpResponse;
 import com.company.wolbu.assignment.auth.service.AuthService;
-import com.company.wolbu.assignment.exception.DomainException;
+import com.company.wolbu.assignment.common.exception.DomainException;
 
 @SpringBootTest
 @Transactional

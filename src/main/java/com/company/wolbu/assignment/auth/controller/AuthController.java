@@ -6,7 +6,7 @@ import com.company.wolbu.assignment.auth.dto.LoginRequest;
 import com.company.wolbu.assignment.auth.dto.SignUpRequest;
 import com.company.wolbu.assignment.auth.dto.SignUpResponse;
 import com.company.wolbu.assignment.auth.service.AuthService;
-import com.company.wolbu.assignment.dto.ApiResponse;
+import com.company.wolbu.assignment.common.dto.ApiResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

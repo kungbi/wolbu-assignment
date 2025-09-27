@@ -1,4 +1,4 @@
-package com.company.wolbu.assignment.dto;
+package com.company.wolbu.assignment.common.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

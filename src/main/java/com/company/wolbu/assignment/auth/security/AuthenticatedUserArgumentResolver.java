@@ -8,7 +8,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 import com.company.wolbu.assignment.auth.domain.MemberRole;
-import com.company.wolbu.assignment.exception.DomainException;
+import com.company.wolbu.assignment.common.exception.DomainException;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;

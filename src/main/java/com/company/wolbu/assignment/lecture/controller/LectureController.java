@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.company.wolbu.assignment.auth.domain.MemberRole;
 import com.company.wolbu.assignment.auth.security.AuthenticatedUser;
 import com.company.wolbu.assignment.auth.security.RequireRole;
-import com.company.wolbu.assignment.dto.ApiResponse;
+import com.company.wolbu.assignment.common.dto.ApiResponse;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureRequest;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureResponse;
 import com.company.wolbu.assignment.lecture.dto.LectureListResponse;

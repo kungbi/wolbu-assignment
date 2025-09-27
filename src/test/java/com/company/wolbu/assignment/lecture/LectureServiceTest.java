@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.company.wolbu.assignment.auth.domain.Member;
 import com.company.wolbu.assignment.auth.domain.MemberRole;
 import com.company.wolbu.assignment.auth.repository.MemberRepository;
-import com.company.wolbu.assignment.exception.DomainException;
+import com.company.wolbu.assignment.common.exception.DomainException;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureRequest;
 import com.company.wolbu.assignment.lecture.dto.CreateLectureResponse;
 import com.company.wolbu.assignment.lecture.service.LectureService;
