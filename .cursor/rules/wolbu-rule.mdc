@@ -98,7 +98,7 @@ Spring Backend Rules (Korean)
 8. 예외 처리
 
 - @RestControllerAdvice + @ExceptionHandler 로 전역 예외 변환.
-- 도메인 예외는 커스텀(예: DomainException(code, message)).
+- 도메인 예외는 커스텀(예: BusinessException(code, message)).
 - 민감정보(스택트레이스/SQL) 노출 금지, 서버측 로깅만.
 
 9. 효율적이고 적시적인 구현
