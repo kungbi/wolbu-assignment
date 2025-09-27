@@ -35,24 +35,8 @@ public class GlobalExceptionHandler {
         if (e instanceof MethodArgumentNotValidException) {
             MethodArgumentNotValidException ex = (MethodArgumentNotValidException) e;
             if (ex.getBindingResult().hasFieldErrors()) {
-                String field = ex.getBindingResult().getFieldErrors().get(0).getField();
                 String defaultMessage = ex.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
-                
-                if ("email".equals(field)) {
-                    message = "이메일 형식이 올바르지 않습니다.";
-                } else if ("password".equals(field)) {
-                    message = "비밀번호 형식이 올바르지 않습니다.";
-                } else if ("name".equals(field)) {
-                    message = "이름을 입력해주세요.";
-                } else if ("phone".equals(field)) {
-                    message = "휴대폰 번호를 입력해주세요.";
-                } else if ("role".equals(field)) {
-                    message = "회원 유형을 선택해주세요.";
-                } else if ("lectureIds".equals(field)) {
-                    message = "신청할 강의를 선택해주세요.";
-                } else {
-                    message = defaultMessage != null ? defaultMessage : message;
-                }
+                message = defaultMessage != null ? defaultMessage : message;
             }
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -61,13 +45,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MissingRequestHeaderException.class)
     public ResponseEntity<ApiResponse<Void>> handleMissingRequestHeader(MissingRequestHeaderException e) {
-        String headerName = e.getHeaderName();
-        if ("Authorization".equals(headerName)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.failure("MISSING_AUTH_HEADER", "인증 토큰이 필요합니다."));
-        }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.failure("MISSING_HEADER", "필수 헤더가 누락되었습니다: " + headerName));
+                .body(ApiResponse.failure("MISSING_HEADER", e.getMessage()));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
