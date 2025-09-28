@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,9 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
     name = "enrollments",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "uk_lecture_member", columnNames = {"lecture_id", "member_id"})
+    },
     indexes = {
         @Index(name = "idx_lecture_member_status", columnList = "lecture_id, member_id, status"),
         @Index(name = "idx_lecture_status", columnList = "lecture_id, status"),

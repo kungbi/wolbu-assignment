@@ -37,11 +37,11 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     long countByLectureIdAndStatus(@Param("lectureId") Long lectureId, @Param("status") EnrollmentStatus status);
 
     /**
-     * 회원의 특정 강의 수강 신청 조회
+     * 회원의 특정 강의 수강 신청 조회 (UNIQUE 제약조건으로 하나만 존재)
      * 
      * @param lectureId 강의 ID
      * @param memberId 회원 ID
-     * @return 수강 신청 정보 (Optional)
+     * @return 수강 신청 정보 (Optional) - 활성/취소 상태 모두 포함
      */
     Optional<Enrollment> findByLectureIdAndMemberId(Long lectureId, Long memberId);
 
@@ -81,23 +81,5 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
            "FROM Enrollment e WHERE e.lectureId = :lectureId AND e.memberId = :memberId AND e.status = 'CONFIRMED'")
     boolean existsActiveByLectureIdAndMemberId(@Param("lectureId") Long lectureId, @Param("memberId") Long memberId);
 
-    /**
-     * 회원의 특정 강의 수강 신청 조회 (활성/취소 포함, 재수강 체크용)
-     * 
-     * @param lectureId 강의 ID
-     * @param memberId 회원 ID
-     * @return 수강 신청 정보 (Optional)
-     */
-    @Query("SELECT e FROM Enrollment e WHERE e.lectureId = :lectureId AND e.memberId = :memberId AND e.status = 'CONFIRMED'")
-    Optional<Enrollment> findActiveByLectureIdAndMemberId(@Param("lectureId") Long lectureId, @Param("memberId") Long memberId);
 
-    /**
-     * 회원의 특정 강의 모든 수강 신청 이력 조회 (재수강 시 기존 취소 건 확인용)
-     * 
-     * @param lectureId 강의 ID
-     * @param memberId 회원 ID
-     * @return 수강 신청 이력 목록 (활성/취소 모두 포함)
-     */
-    @Query("SELECT e FROM Enrollment e WHERE e.lectureId = :lectureId AND e.memberId = :memberId ORDER BY e.createdAt DESC")
-    List<Enrollment> findAllByLectureIdAndMemberId(@Param("lectureId") Long lectureId, @Param("memberId") Long memberId);
 }
