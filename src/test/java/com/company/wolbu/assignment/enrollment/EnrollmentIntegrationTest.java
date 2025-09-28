@@ -21,6 +21,7 @@ import com.company.wolbu.assignment.auth.repository.MemberRepository;
 import com.company.wolbu.assignment.enrollment.domain.EnrollmentStatus;
 import com.company.wolbu.assignment.enrollment.dto.EnrollmentRequest;
 import com.company.wolbu.assignment.enrollment.dto.EnrollmentResult;
+import com.company.wolbu.assignment.enrollment.dto.EnrollmentResponse;
 import com.company.wolbu.assignment.enrollment.repository.EnrollmentRepository;
 import com.company.wolbu.assignment.enrollment.service.EnrollmentService;
 import com.company.wolbu.assignment.lecture.domain.Lecture;
@@ -185,5 +186,58 @@ class EnrollmentIntegrationTest {
         long totalCount = enrollmentRepository.countByLectureIdAndStatus(savedLecture.getId(), EnrollmentStatus.CONFIRMED) +
                          enrollmentRepository.countByLectureIdAndStatus(savedLecture.getId(), EnrollmentStatus.CANCELED);
         assertThat(totalCount).isGreaterThanOrEqualTo(1); // 재활성화 또는 새 생성
+    }
+    
+    @Test
+    @DisplayName("통합 테스트 - 회원의 수강 신청 목록 조회")
+    void getEnrollmentsByMember_IntegrationTest() {
+        // Given
+        Member instructor = Member.create("강사", "instructor4@example.com", "010-0000-0003", "password", MemberRole.INSTRUCTOR);
+        Member savedInstructor = memberRepository.saveAndFlush(instructor);
+        
+        Member student = Member.create("학생", "student3@example.com", "010-3333-3333", "password", MemberRole.STUDENT);
+        Member savedStudent = memberRepository.saveAndFlush(student);
+        
+        // 여러 강의 생성
+        Lecture lecture1 = Lecture.create("자바 프로그래밍", 15, 100000, savedInstructor.getId());
+        Lecture lecture2 = Lecture.create("스프링 부트", 20, 120000, savedInstructor.getId());
+        Lecture lecture3 = Lecture.create("데이터베이스", 25, 80000, savedInstructor.getId());
+        
+        Lecture savedLecture1 = lectureRepository.saveAndFlush(lecture1);
+        Lecture savedLecture2 = lectureRepository.saveAndFlush(lecture2);
+        Lecture savedLecture3 = lectureRepository.saveAndFlush(lecture3);
+        
+        // 강의 신청
+        EnrollmentRequest request1 = new EnrollmentRequest(List.of(savedLecture1.getId()));
+        EnrollmentRequest request2 = new EnrollmentRequest(List.of(savedLecture2.getId()));
+        EnrollmentRequest request3 = new EnrollmentRequest(List.of(savedLecture3.getId()));
+        
+        enrollmentService.enrollInLectures(savedStudent.getId(), request1);
+        enrollmentService.enrollInLectures(savedStudent.getId(), request2);
+        EnrollmentResult result3 = enrollmentService.enrollInLectures(savedStudent.getId(), request3);
+        
+        // 세 번째 강의는 취소
+        Long enrollmentId3 = result3.getSuccessfulEnrollments().get(0).getEnrollmentId();
+        enrollmentService.cancelEnrollment(savedStudent.getId(), enrollmentId3);
+        
+        // When
+        List<EnrollmentResponse> enrollments = enrollmentService.getEnrollmentsByMember(savedStudent.getId());
+        
+        // Then
+        // 활성 상태인 강의만 조회되어야 함 (첫 번째, 두 번째 강의만)
+        assertThat(enrollments).hasSize(2);
+        
+        List<String> lectureTitles = enrollments.stream()
+                .map(EnrollmentResponse::getLectureTitle)
+                .toList();
+        
+        assertThat(lectureTitles).containsExactlyInAnyOrder("자바 프로그래밍", "스프링 부트");
+        assertThat(lectureTitles).doesNotContain("데이터베이스"); // 취소된 강의는 포함되지 않음
+        
+        // 모든 수강 신청의 상태가 CONFIRMED인지 확인
+        enrollments.forEach(enrollment -> {
+            assertThat(enrollment.getStatus()).isEqualTo("CONFIRMED");
+            assertThat(enrollment.getMemberId()).isEqualTo(savedStudent.getId());
+        });
     }
 }
