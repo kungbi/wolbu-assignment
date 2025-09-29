@@ -8,7 +8,7 @@ import lombok.Getter;
  * 강의 신청 응답 DTO
  */
 @Getter
-public class EnrollmentResponse {
+public class EnrollmentResponseDto {
     
     private final Long enrollmentId;
     private final Long lectureId;
@@ -17,7 +17,7 @@ public class EnrollmentResponse {
     private final String status;
     private final LocalDateTime enrolledAt;
 
-    public EnrollmentResponse(Long enrollmentId, Long lectureId, String lectureTitle, 
+    public EnrollmentResponseDto(Long enrollmentId, Long lectureId, String lectureTitle, 
                              Long memberId, String status, LocalDateTime enrolledAt) {
         this.enrollmentId = enrollmentId;
         this.lectureId = lectureId;

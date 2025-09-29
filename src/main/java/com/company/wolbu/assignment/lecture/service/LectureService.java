@@ -13,10 +13,10 @@ import com.company.wolbu.assignment.lecture.exception.InstructorOnlyException;
 import com.company.wolbu.assignment.lecture.exception.InvalidLectureDataException;
 import com.company.wolbu.assignment.lecture.exception.LectureNotFoundException;
 import com.company.wolbu.assignment.lecture.domain.Lecture;
-import com.company.wolbu.assignment.lecture.dto.CreateLectureRequest;
-import com.company.wolbu.assignment.lecture.dto.CreateLectureResponse;
-import com.company.wolbu.assignment.lecture.dto.LectureListResponse;
-import com.company.wolbu.assignment.lecture.dto.LectureSortType;
+import com.company.wolbu.assignment.lecture.dto.CreateLectureRequestDto;
+import com.company.wolbu.assignment.lecture.dto.CreateLectureResponseDto;
+import com.company.wolbu.assignment.lecture.dto.LectureListResponseDto;
+import com.company.wolbu.assignment.lecture.dto.LectureSortTypeDto;
 import com.company.wolbu.assignment.lecture.repository.LectureRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -43,7 +43,7 @@ public class LectureService {
      * @throws NotFoundException 회원을 찾을 수 없거나 강사가 아닌 경우
      */
     @Transactional
-    public CreateLectureResponse createLecture(Long memberId, CreateLectureRequest request) {
+    public CreateLectureResponseDto createLecture(Long memberId, CreateLectureRequestDto request) {
         log.info("강의 개설 요청: memberId={}, title={}", memberId, request.getTitle());
         
         // 1. 회원 존재 여부 확인
@@ -69,7 +69,7 @@ public class LectureService {
             
             log.info("강의 개설 완료: lectureId={}, instructorId={}", savedLecture.getId(), memberId);
             
-            return new CreateLectureResponse(
+            return new CreateLectureResponseDto(
                 savedLecture.getId(),
                 savedLecture.getTitle(),
                 savedLecture.getMaxCapacity(),
@@ -92,11 +92,11 @@ public class LectureService {
      * @throws NotFoundException 강의를 찾을 수 없는 경우
      */
     @Transactional(readOnly = true)
-    public CreateLectureResponse getLecture(Long lectureId) {
+    public CreateLectureResponseDto getLecture(Long lectureId) {
         Lecture lecture = lectureRepository.findById(lectureId)
                 .orElseThrow(() -> new LectureNotFoundException(lectureId));
         
-        return new CreateLectureResponse(
+        return new CreateLectureResponseDto(
             lecture.getId(),
             lecture.getTitle(),
             lecture.getMaxCapacity(),
@@ -127,7 +127,7 @@ public class LectureService {
      * @return 강의 목록 페이지
      */
     @Transactional(readOnly = true)
-    public Page<LectureListResponse> getLectureList(Integer page, Integer size, LectureSortType sortType) {
+    public Page<LectureListResponseDto> getLectureList(Integer page, Integer size, LectureSortTypeDto sortType) {
         // 페이지 번호 검증 (1부터 시작, 0으로 변환)
         int pageNumber = (page != null && page > 0) ? page - 1 : 0;
         
@@ -135,7 +135,7 @@ public class LectureService {
         int pageSize = (size != null && size > 0) ? Math.min(size, 100) : 20;
         
         // 정렬 타입 기본값 설정
-        LectureSortType sort = (sortType != null) ? sortType : LectureSortType.RECENT;
+        LectureSortTypeDto sort = (sortType != null) ? sortType : LectureSortTypeDto.RECENT;
         
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
         

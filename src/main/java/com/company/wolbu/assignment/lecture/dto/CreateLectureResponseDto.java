@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @NoArgsConstructor
-public class CreateLectureResponse {
+public class CreateLectureResponseDto {
 
     private Long id;
     private String title;
@@ -19,7 +19,7 @@ public class CreateLectureResponse {
     private Long instructorId;
     private LocalDateTime createdAt;
 
-    public CreateLectureResponse(Long id, String title, Integer maxCapacity, Integer price, Long instructorId, LocalDateTime createdAt) {
+    public CreateLectureResponseDto(Long id, String title, Integer maxCapacity, Integer price, Long instructorId, LocalDateTime createdAt) {
         this.id = id;
         this.title = title;
         this.maxCapacity = maxCapacity;

@@ -10,7 +10,7 @@ import lombok.Getter;
  * 강의 목록 조회 응답 DTO
  */
 @Getter
-public class LectureListResponse {
+public class LectureListResponseDto {
     
     private final Long id;
     private final String title;
@@ -21,7 +21,7 @@ public class LectureListResponse {
     private final BigDecimal enrollmentRate;
     private final LocalDateTime createdAt;
 
-    public LectureListResponse(Long id, String title, Integer price, String instructorName, 
+    public LectureListResponseDto(Long id, String title, Integer price, String instructorName, 
                               Long currentEnrollmentCount, Integer maxCapacity, LocalDateTime createdAt) {
         this.id = id;
         this.title = title;

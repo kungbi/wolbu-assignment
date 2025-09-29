@@ -1,6 +1,6 @@
 package com.company.wolbu.assignment.health.controller;
 
-import com.company.wolbu.assignment.common.dto.ApiResponse;
+import com.company.wolbu.assignment.common.dto.ApiResponseDto;
 import com.company.wolbu.assignment.health.dto.HealthStatusDto;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +32,7 @@ public class HealthController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상태 확인 성공")
     })
     @GetMapping("/health")
-    public ResponseEntity<ApiResponse<HealthStatusDto>> health() {
+    public ResponseEntity<ApiResponseDto<HealthStatusDto>> health() {
         HealthStatusDto healthStatus = HealthStatusDto.builder()
                 .status("UP")
                 .application(applicationName)
@@ -40,7 +40,7 @@ public class HealthController {
                 .version(applicationVersion)
                 .message("Application is running normally")
                 .build();
-        return ResponseEntity.ok(ApiResponse.success(healthStatus));
+        return ResponseEntity.ok(ApiResponseDto.success(healthStatus));
     }
     
 }

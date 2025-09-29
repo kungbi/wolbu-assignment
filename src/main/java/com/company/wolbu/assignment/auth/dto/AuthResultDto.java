@@ -5,8 +5,8 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class AuthResult {
-    private AuthResponse response;
+public class AuthResultDto {
+    private AuthResponseDto response;
     private String refreshToken;
 }
 

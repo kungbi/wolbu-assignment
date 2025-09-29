@@ -8,15 +8,15 @@ import lombok.Getter;
  * 강의 신청 결과 DTO
  */
 @Getter
-public class EnrollmentResult {
+public class EnrollmentResultDto {
     
-    private final List<EnrollmentResponse> successfulEnrollments;
+    private final List<EnrollmentResponseDto> successfulEnrollments;
     private final List<EnrollmentFailure> failedEnrollments;
     private final int totalRequested;
     private final int successCount;
     private final int failureCount;
 
-    public EnrollmentResult(List<EnrollmentResponse> successfulEnrollments, 
+    public EnrollmentResultDto(List<EnrollmentResponseDto> successfulEnrollments, 
                            List<EnrollmentFailure> failedEnrollments) {
         this.successfulEnrollments = successfulEnrollments;
         this.failedEnrollments = failedEnrollments;

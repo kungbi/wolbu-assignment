@@ -1,12 +1,12 @@
 package com.company.wolbu.assignment.auth.controller;
 
-import com.company.wolbu.assignment.auth.dto.AuthResponse;
-import com.company.wolbu.assignment.auth.dto.AuthResult;
-import com.company.wolbu.assignment.auth.dto.LoginRequest;
-import com.company.wolbu.assignment.auth.dto.SignUpRequest;
-import com.company.wolbu.assignment.auth.dto.SignUpResponse;
+import com.company.wolbu.assignment.auth.dto.AuthResponseDto;
+import com.company.wolbu.assignment.auth.dto.AuthResultDto;
+import com.company.wolbu.assignment.auth.dto.LoginRequestDto;
+import com.company.wolbu.assignment.auth.dto.SignUpRequestDto;
+import com.company.wolbu.assignment.auth.dto.SignUpResponseDto;
 import com.company.wolbu.assignment.auth.service.AuthService;
-import com.company.wolbu.assignment.common.dto.ApiResponse;
+import com.company.wolbu.assignment.common.dto.ApiResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -45,7 +45,7 @@ public class AuthController {
             required = true,
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = SignUpRequest.class),
+                schema = @Schema(implementation = SignUpRequestDto.class),
                 examples = @ExampleObject(
                     name = "회원가입 예시",
                     value = """
@@ -67,9 +67,9 @@ public class AuthController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 존재하는 이메일")
     })
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<SignUpResponse>> signUp(@Valid @RequestBody SignUpRequest request) {
-        SignUpResponse result = authService.signUp(request);
-        return ResponseEntity.ok(ApiResponse.success(result));
+    public ResponseEntity<ApiResponseDto<SignUpResponseDto>> signUp(@Valid @RequestBody SignUpRequestDto request) {
+        SignUpResponseDto result = authService.signUp(request);
+        return ResponseEntity.ok(ApiResponseDto.success(result));
     }
 
     @Operation(
@@ -80,7 +80,7 @@ public class AuthController {
             required = true,
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = LoginRequest.class),
+                schema = @Schema(implementation = LoginRequestDto.class),
                 examples = @ExampleObject(
                     name = "로그인 예시",
                     value = """
@@ -99,8 +99,8 @@ public class AuthController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "이메일 또는 비밀번호 불일치")
     })
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-        AuthResult result = authService.login(request);
+    public ResponseEntity<ApiResponseDto<AuthResponseDto>> login(@Valid @RequestBody LoginRequestDto request) {
+        AuthResultDto result = authService.login(request);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.getRefreshToken())
                 .httpOnly(true)
                 .secure(false)
@@ -110,7 +110,7 @@ public class AuthController {
                 .build();
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(ApiResponse.success(result.getResponse()));
+                .body(ApiResponseDto.success(result.getResponse()));
     }
 
     @Operation(
@@ -123,7 +123,7 @@ public class AuthController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않은 Refresh Token")
     })
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(HttpServletRequest request) {
+    public ResponseEntity<ApiResponseDto<AuthResponseDto>> refreshToken(HttpServletRequest request) {
         // 쿠키에서 refresh token 읽기
         String refreshToken = null;
         if (request.getCookies() != null) {
@@ -137,10 +137,10 @@ public class AuthController {
         
         if (refreshToken == null) {
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.failure("REFRESH_TOKEN_MISSING", "리프레시 토큰이 없습니다."));
+                    .body(ApiResponseDto.failure("REFRESH_TOKEN_MISSING", "리프레시 토큰이 없습니다."));
         }
         
-        AuthResult result = authService.refreshToken(refreshToken);
+        AuthResultDto result = authService.refreshToken(refreshToken);
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.getRefreshToken())
                 .httpOnly(true)
                 .secure(false)
@@ -150,7 +150,7 @@ public class AuthController {
                 .build();
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(ApiResponse.success(result.getResponse()));
+                .body(ApiResponseDto.success(result.getResponse()));
     }
 
 }

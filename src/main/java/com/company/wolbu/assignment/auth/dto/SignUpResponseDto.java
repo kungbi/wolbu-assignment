@@ -7,11 +7,10 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class AuthResponse {
+public class SignUpResponseDto {
     private Long memberId;
     private String name;
     private String email;
-    private String accessToken;
     private MemberRole role;
 }
 

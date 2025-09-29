@@ -3,7 +3,7 @@ package com.company.wolbu.assignment.enrollment.controller;
 import com.company.wolbu.assignment.auth.domain.MemberRole;
 import com.company.wolbu.assignment.auth.security.AuthenticatedUser;
 import com.company.wolbu.assignment.auth.security.RequireRole;
-import com.company.wolbu.assignment.common.dto.ApiResponse;
+import com.company.wolbu.assignment.common.dto.ApiResponseDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,9 +13,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import com.company.wolbu.assignment.enrollment.dto.EnrollmentRequest;
-import com.company.wolbu.assignment.enrollment.dto.EnrollmentResponse;
-import com.company.wolbu.assignment.enrollment.dto.EnrollmentResult;
+import com.company.wolbu.assignment.enrollment.dto.EnrollmentRequestDto;
+import com.company.wolbu.assignment.enrollment.dto.EnrollmentResponseDto;
+import com.company.wolbu.assignment.enrollment.dto.EnrollmentResultDto;
 import com.company.wolbu.assignment.enrollment.service.EnrollmentService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -53,7 +53,7 @@ public class EnrollmentController {
             required = true,
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = EnrollmentRequest.class),
+                schema = @Schema(implementation = EnrollmentRequestDto.class),
                 examples = @ExampleObject(
                     name = "수강 신청 예시",
                     value = """
@@ -74,14 +74,14 @@ public class EnrollmentController {
     })
     @PostMapping
     @RequireRole(value = MemberRole.STUDENT, message = "수강 신청은 수강생만 할 수 있습니다.")
-    public ResponseEntity<ApiResponse<EnrollmentResult>> enrollInLectures(
+    public ResponseEntity<ApiResponseDto<EnrollmentResultDto>> enrollInLectures(
             AuthenticatedUser user,
-            @Valid @RequestBody EnrollmentRequest request) {
+            @Valid @RequestBody EnrollmentRequestDto request) {
 
         log.info("강의 신청 API 호출: memberId={}, lectureIds={}",
                 user.getMemberId(), request.getLectureIds());
 
-        EnrollmentResult result = enrollmentService.enrollInLectures(user.getMemberId(), request);
+        EnrollmentResultDto result = enrollmentService.enrollInLectures(user.getMemberId(), request);
 
         // 모든 신청이 실패한 경우 적절한 HTTP 상태코드 반환
         if (result.getSuccessCount() == 0) {
@@ -90,11 +90,11 @@ public class EnrollmentController {
                     .anyMatch(failure -> "COURSE_FULL".equals(failure.getErrorCode()));
 
             if (hasCapacityError) {
-                return ResponseEntity.status(409).body(ApiResponse.error("COURSE_FULL", "정원이 초과되었습니다.", result));
+                return ResponseEntity.status(409).body(ApiResponseDto.error("COURSE_FULL", "정원이 초과되었습니다.", result));
             }
         }
 
-        return ResponseEntity.ok(ApiResponse.success(result));
+        return ResponseEntity.ok(ApiResponseDto.success(result));
     }
 
     @Operation(
@@ -109,13 +109,13 @@ public class EnrollmentController {
     })
     @GetMapping("/my")
     @RequireRole(value = MemberRole.STUDENT, message = "수강 신청 목록은 수강생만 조회할 수 있습니다.")
-    public ResponseEntity<ApiResponse<List<EnrollmentResponse>>> getMyEnrollments(
+    public ResponseEntity<ApiResponseDto<List<EnrollmentResponseDto>>> getMyEnrollments(
             AuthenticatedUser user) {
 
         log.info("내 수강 신청 목록 조회 API 호출: memberId={}", user.getMemberId());
 
-        List<EnrollmentResponse> enrollments = enrollmentService.getEnrollmentsByMember(user.getMemberId());
-        return ResponseEntity.ok(ApiResponse.success(enrollments));
+        List<EnrollmentResponseDto> enrollments = enrollmentService.getEnrollmentsByMember(user.getMemberId());
+        return ResponseEntity.ok(ApiResponseDto.success(enrollments));
     }
 
     @Operation(
@@ -133,7 +133,7 @@ public class EnrollmentController {
     })
     @DeleteMapping("/{enrollmentId}")
     @RequireRole(value = MemberRole.STUDENT, message = "수강 신청 취소는 수강생만 할 수 있습니다.")
-    public ResponseEntity<ApiResponse<Void>> cancelEnrollment(
+    public ResponseEntity<ApiResponseDto<Void>> cancelEnrollment(
             AuthenticatedUser user,
             @PathVariable Long enrollmentId) {
 
@@ -141,6 +141,6 @@ public class EnrollmentController {
                 user.getMemberId(), enrollmentId);
 
         enrollmentService.cancelEnrollment(user.getMemberId(), enrollmentId);
-        return ResponseEntity.ok(ApiResponse.success(null));
+        return ResponseEntity.ok(ApiResponseDto.success(null));
     }
 }

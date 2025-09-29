@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @NoArgsConstructor
-public class EnrollmentRequest {
+public class EnrollmentRequestDto {
     
     /**
      * 신청할 강의 ID 목록
@@ -20,7 +20,7 @@ public class EnrollmentRequest {
     @NotEmpty(message = "신청할 강의를 선택해주세요.")
     private List<@NotNull(message = "강의 ID는 필수입니다.") Long> lectureIds;
 
-    public EnrollmentRequest(List<Long> lectureIds) {
+    public EnrollmentRequestDto(List<Long> lectureIds) {
         this.lectureIds = lectureIds;
     }
 }

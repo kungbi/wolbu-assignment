@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import jakarta.persistence.LockModeType;
 
 import com.company.wolbu.assignment.lecture.domain.Lecture;
-import com.company.wolbu.assignment.lecture.dto.LectureListResponse;
+import com.company.wolbu.assignment.lecture.dto.LectureListResponseDto;
 
 /**
  * 강의 Repository 인터페이스
@@ -51,7 +51,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * @param pageable 페이징 정보
      * @return 강의 목록과 신청자 수 정보
      */
-    @Query("SELECT new com.company.wolbu.assignment.lecture.dto.LectureListResponse(" +
+    @Query("SELECT new com.company.wolbu.assignment.lecture.dto.LectureListResponseDto(" +
            "l.id, l.title, l.price, m.name, " +
            "COALESCE(COUNT(e), 0), l.maxCapacity, l.createdAt) " +
            "FROM Lecture l " +
@@ -59,7 +59,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
            "LEFT JOIN Enrollment e ON l.id = e.lectureId AND e.status = 'CONFIRMED' " +
            "GROUP BY l.id, l.title, l.price, m.name, l.maxCapacity, l.createdAt " +
            "ORDER BY l.createdAt DESC")
-    Page<LectureListResponse> findAllWithEnrollmentCountOrderByCreatedAt(Pageable pageable);
+    Page<LectureListResponseDto> findAllWithEnrollmentCountOrderByCreatedAt(Pageable pageable);
 
     /**
      * 강의 목록 조회 (신청자 많은 순)
@@ -67,7 +67,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * @param pageable 페이징 정보
      * @return 강의 목록과 신청자 수 정보
      */
-    @Query("SELECT new com.company.wolbu.assignment.lecture.dto.LectureListResponse(" +
+    @Query("SELECT new com.company.wolbu.assignment.lecture.dto.LectureListResponseDto(" +
            "l.id, l.title, l.price, m.name, " +
            "COALESCE(COUNT(e), 0), l.maxCapacity, l.createdAt) " +
            "FROM Lecture l " +
@@ -75,7 +75,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
            "LEFT JOIN Enrollment e ON l.id = e.lectureId AND e.status = 'CONFIRMED' " +
            "GROUP BY l.id, l.title, l.price, m.name, l.maxCapacity, l.createdAt " +
            "ORDER BY COUNT(e) DESC, l.createdAt DESC")
-    Page<LectureListResponse> findAllWithEnrollmentCountOrderByEnrollmentCount(Pageable pageable);
+    Page<LectureListResponseDto> findAllWithEnrollmentCountOrderByEnrollmentCount(Pageable pageable);
 
     /**
      * 강의 목록 조회 (신청률 높은 순)
@@ -83,7 +83,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * @param pageable 페이징 정보
      * @return 강의 목록과 신청자 수 정보
      */
-    @Query("SELECT new com.company.wolbu.assignment.lecture.dto.LectureListResponse(" +
+    @Query("SELECT new com.company.wolbu.assignment.lecture.dto.LectureListResponseDto(" +
            "l.id, l.title, l.price, m.name, " +
            "COALESCE(COUNT(e), 0), l.maxCapacity, l.createdAt) " +
            "FROM Lecture l " +
@@ -91,7 +91,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
            "LEFT JOIN Enrollment e ON l.id = e.lectureId AND e.status = 'CONFIRMED' " +
            "GROUP BY l.id, l.title, l.price, m.name, l.maxCapacity, l.createdAt " +
            "ORDER BY (CAST(COUNT(e) AS double) / l.maxCapacity) DESC, l.createdAt DESC")
-    Page<LectureListResponse> findAllWithEnrollmentCountOrderByEnrollmentRate(Pageable pageable);
+    Page<LectureListResponseDto> findAllWithEnrollmentCountOrderByEnrollmentRate(Pageable pageable);
 
     /**
      * 동시성 제어를 위한 강의 조회 (비관적 락)

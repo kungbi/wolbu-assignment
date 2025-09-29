@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ApiResponse<T> {
+public class ApiResponseDto<T> {
     
     /**
      * 요청 성공 여부
@@ -58,8 +58,8 @@ public class ApiResponse<T> {
      * @param <T> 데이터 타입
      * @return 성공 응답
      */
-    public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResponseDto<T> success(T data) {
+        return ApiResponseDto.<T>builder()
                 .success(true)
                 .data(data)
                 .build();
@@ -73,8 +73,8 @@ public class ApiResponse<T> {
      * @param <T> 데이터 타입
      * @return 실패 응답
      */
-    public static <T> ApiResponse<T> failure(String code, String message) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResponseDto<T> failure(String code, String message) {
+        return ApiResponseDto.<T>builder()
                 .success(false)
                 .error(ErrorInfo.builder()
                         .code(code)
@@ -93,8 +93,8 @@ public class ApiResponse<T> {
      * @param <T> 데이터 타입
      * @return 에러 응답 (데이터 포함)
      */
-    public static <T> ApiResponse<T> error(String code, String message, T data) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResponseDto<T> error(String code, String message, T data) {
+        return ApiResponseDto.<T>builder()
                 .success(false)
                 .data(data)
                 .error(ErrorInfo.builder()

@@ -7,11 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.company.wolbu.assignment.auth.domain.Member;
 import com.company.wolbu.assignment.auth.domain.MemberRole;
 import com.company.wolbu.assignment.auth.domain.RefreshToken;
-import com.company.wolbu.assignment.auth.dto.AuthResponse;
-import com.company.wolbu.assignment.auth.dto.AuthResult;
-import com.company.wolbu.assignment.auth.dto.SignUpResponse;
-import com.company.wolbu.assignment.auth.dto.LoginRequest;
-import com.company.wolbu.assignment.auth.dto.SignUpRequest;
+import com.company.wolbu.assignment.auth.dto.AuthResponseDto;
+import com.company.wolbu.assignment.auth.dto.AuthResultDto;
+import com.company.wolbu.assignment.auth.dto.SignUpResponseDto;
+import com.company.wolbu.assignment.auth.dto.LoginRequestDto;
+import com.company.wolbu.assignment.auth.dto.SignUpRequestDto;
 import com.company.wolbu.assignment.auth.repository.MemberRepository;
 import com.company.wolbu.assignment.auth.repository.RefreshTokenRepository;
 import com.company.wolbu.assignment.auth.security.JwtProvider;
@@ -34,7 +34,7 @@ public class AuthService {
     private final JwtProvider jwtProvider;
 
     @Transactional
-    public SignUpResponse signUp(SignUpRequest req) {
+    public SignUpResponseDto signUp(SignUpRequestDto req) {
         if (!PasswordPolicy.isValid(req.getPassword())) {
             throw new InvalidPasswordPolicyException(
                 "비밀번호는 6~10자, 영문 대소문자와 숫자 중 2종 이상 조합이어야 합니다.");
@@ -48,11 +48,11 @@ public class AuthService {
         Member member = Member.create(req.getName(), req.getEmail(), req.getPhone(), hash, role);
         memberRepository.save(member);
 
-        return new SignUpResponse(member.getId(), member.getName(), member.getEmail(), member.getRole());
+        return new SignUpResponseDto(member.getId(), member.getName(), member.getEmail(), member.getRole());
     }
 
     @Transactional
-    public AuthResult login(LoginRequest req) {
+    public AuthResultDto login(LoginRequestDto req) {
         Member member = memberRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException());
         if (!passwordEncoder.matches(req.getPassword(), member.getPasswordHash())) {
@@ -66,14 +66,14 @@ public class AuthService {
         refreshTokenRepository.flush();
         refreshTokenRepository.save(RefreshToken.issue(member, refresh));
 
-        return new AuthResult(
-            new AuthResponse(member.getId(), member.getName(), member.getEmail(), access, member.getRole()),
+        return new AuthResultDto(
+            new AuthResponseDto(member.getId(), member.getName(), member.getEmail(), access, member.getRole()),
             refresh
         );
     }
 
     @Transactional
-    public AuthResult refreshToken(String refreshToken) {
+    public AuthResultDto refreshToken(String refreshToken) {
         // 1. refresh token이 DB에 존재하는지 확인
         RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new TokenExpiredException("유효하지 않은 리프레시 토큰입니다."));
@@ -96,8 +96,8 @@ public class AuthService {
             refreshTokenRepository.flush();
             refreshTokenRepository.save(RefreshToken.issue(member, newRefresh));
 
-            return new AuthResult(
-                new AuthResponse(member.getId(), member.getName(), member.getEmail(), newAccess, member.getRole()),
+            return new AuthResultDto(
+                new AuthResponseDto(member.getId(), member.getName(), member.getEmail(), newAccess, member.getRole()),
                 newRefresh
             );
         } catch (Exception e) {

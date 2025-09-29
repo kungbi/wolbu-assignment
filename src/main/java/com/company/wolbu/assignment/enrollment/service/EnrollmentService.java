@@ -4,9 +4,9 @@ import com.company.wolbu.assignment.auth.repository.MemberRepository;
 import com.company.wolbu.assignment.common.exception.BusinessException;
 import com.company.wolbu.assignment.enrollment.domain.Enrollment;
 import com.company.wolbu.assignment.enrollment.domain.EnrollmentStatus;
-import com.company.wolbu.assignment.enrollment.dto.EnrollmentRequest;
-import com.company.wolbu.assignment.enrollment.dto.EnrollmentResponse;
-import com.company.wolbu.assignment.enrollment.dto.EnrollmentResult;
+import com.company.wolbu.assignment.enrollment.dto.EnrollmentRequestDto;
+import com.company.wolbu.assignment.enrollment.dto.EnrollmentResponseDto;
+import com.company.wolbu.assignment.enrollment.dto.EnrollmentResultDto;
 import com.company.wolbu.assignment.enrollment.exception.AlreadyCanceledException;
 import com.company.wolbu.assignment.enrollment.exception.AlreadyEnrolledException;
 import com.company.wolbu.assignment.enrollment.exception.CourseFullException;
@@ -45,15 +45,15 @@ public class EnrollmentService {
      * @return 신청 결과
      */
     @Transactional
-    public EnrollmentResult enrollInLectures(Long memberId, EnrollmentRequest request) {
+    public EnrollmentResultDto enrollInLectures(Long memberId, EnrollmentRequestDto request) {
         log.info("강의 신청 요청: memberId={}, lectureIds={}", memberId, request.getLectureIds());
 
         // 1. 회원 존재 확인
         memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotFoundException(memberId));
 
-        List<EnrollmentResponse> successfulEnrollments = new ArrayList<>();
-        List<EnrollmentResult.EnrollmentFailure> failedEnrollments = new ArrayList<>();
+        List<EnrollmentResponseDto> successfulEnrollments = new ArrayList<>();
+        List<EnrollmentResultDto.EnrollmentFailure> failedEnrollments = new ArrayList<>();
 
         // 2. 데드락 방지를 위해 강의 ID 정렬
         List<Long> sortedLectureIds = new ArrayList<>(request.getLectureIds());
@@ -62,7 +62,7 @@ public class EnrollmentService {
         // 3. 각 강의에 대해 순차적으로 신청 처리
         for (Long lectureId : sortedLectureIds) {
             try {
-                EnrollmentResponse response = enrollInSingleLecture(memberId, lectureId);
+                EnrollmentResponseDto response = enrollInSingleLecture(memberId, lectureId);
                 successfulEnrollments.add(response);
                 log.info("강의 신청 성공: memberId={}, lectureId={}", memberId, lectureId);
 
@@ -72,7 +72,7 @@ public class EnrollmentService {
                         .orElseThrow(() -> new LectureNotFoundException(lectureId));
                 String lectureTitle = lecture.getTitle();
 
-                failedEnrollments.add(new EnrollmentResult.EnrollmentFailure(
+                failedEnrollments.add(new EnrollmentResultDto.EnrollmentFailure(
                         lectureId, lectureTitle, e.errorCode(), e.getMessage()));
 
                 log.warn("강의 신청 실패: memberId={}, lectureId={}, error={}",
@@ -80,7 +80,7 @@ public class EnrollmentService {
             }
         }
 
-        return new EnrollmentResult(successfulEnrollments, failedEnrollments);
+        return new EnrollmentResultDto(successfulEnrollments, failedEnrollments);
     }
 
     /**
@@ -90,7 +90,7 @@ public class EnrollmentService {
      * @param lectureId 강의 ID
      * @return 신청 응답
      */
-    private EnrollmentResponse enrollInSingleLecture(Long memberId, Long lectureId) {
+    private EnrollmentResponseDto enrollInSingleLecture(Long memberId, Long lectureId) {
         // 1. 강의 존재 확인 및 비관적 락 획득
         Lecture lecture = lectureRepository.findByIdWithLock(lectureId)
                 .orElseThrow(() -> new LectureNotFoundException(lectureId));
@@ -120,7 +120,7 @@ public class EnrollmentService {
                 log.info("기존 취소 신청 재활성화: enrollmentId={}, memberId={}, lectureId={}",
                         enrollment.getId(), memberId, lectureId);
             }
-            return new EnrollmentResponse(
+            return new EnrollmentResponseDto(
                     enrollment.getId(),
                     enrollment.getLectureId(),
                     lecture.getTitle(),
@@ -136,7 +136,7 @@ public class EnrollmentService {
         log.info("새로운 수강 신청 생성: enrollmentId={}, memberId={}, lectureId={}",
                 enrollment.getId(), memberId, lectureId);
 
-        return new EnrollmentResponse(
+        return new EnrollmentResponseDto(
                 enrollment.getId(),
                 enrollment.getLectureId(),
                 lecture.getTitle(),
@@ -153,7 +153,7 @@ public class EnrollmentService {
      * @return 수강 신청 목록
      */
     @Transactional(readOnly = true)
-    public List<EnrollmentResponse> getEnrollmentsByMember(Long memberId) {
+    public List<EnrollmentResponseDto> getEnrollmentsByMember(Long memberId) {
         log.info("회원 수강 신청 목록 조회: memberId={}", memberId);
 
         // 회원 존재 확인
@@ -169,7 +169,7 @@ public class EnrollmentService {
                     Lecture lecture = lectureRepository.findById(enrollment.getLectureId())
                             .orElseThrow(() -> new LectureNotFoundException());
 
-                    return new EnrollmentResponse(
+                    return new EnrollmentResponseDto(
                             enrollment.getId(),
                             enrollment.getLectureId(),
                             lecture.getTitle(),

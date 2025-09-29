@@ -3,7 +3,7 @@ package com.company.wolbu.assignment.lecture.dto;
 /**
  * 강의 목록 정렬 타입
  */
-public enum LectureSortType {
+public enum LectureSortTypeDto {
     /**
      * 최근 등록순 (등록일 DESC)
      */
