@@ -191,4 +191,13 @@ class LectureControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.error.code").value("LECTURE_NOT_FOUND"));
     }
+
+    @Test
+    @DisplayName("강의 목록을 성공적으로 조회한다")
+    void getLectureList_success() throws Exception {
+        // Given
+        mockMvc.perform(get("/api/lectures"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
 }

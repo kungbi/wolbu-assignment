@@ -1,138 +1,132 @@
 package com.company.wolbu.assignment.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.company.wolbu.assignment.auth.domain.MemberRole;
 import com.company.wolbu.assignment.auth.dto.LoginRequest;
 import com.company.wolbu.assignment.auth.dto.SignUpRequest;
-import com.company.wolbu.assignment.common.dto.ApiResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.Cookie;
 
 /**
  * AuthController 통합 테스트
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
 class AuthControllerTest {
 
-    @LocalServerPort
-    private int port;
+    @Autowired
+    private MockMvc mockMvc;
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private ObjectMapper objectMapper;
 
     @Test
     @DisplayName("회원가입 API 성공")
-    void signUp_Success() {
+    void signUp_Success() throws Exception {
         // Given
         SignUpRequest request = createSignUpRequest("홍길동", "hong@example.com", "01012345678", "Pass123", MemberRole.STUDENT);
+        String requestJson = objectMapper.writeValueAsString(request);
 
-        // When
-        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/auth/signup", 
-            request, 
-            ApiResponse.class);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isTrue();
-        
-        @SuppressWarnings("unchecked")
-        var data = (java.util.Map<String, Object>) response.getBody().getData();
-        assertThat(data.get("name")).isEqualTo("홍길동");
-        assertThat(data.get("email")).isEqualTo("hong@example.com");
-        assertThat(data.get("role")).isEqualTo("STUDENT");
-        assertThat(data.get("memberId")).isNotNull();
+        // When & Then
+        mockMvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.name").value("홍길동"))
+                .andExpect(jsonPath("$.data.email").value("hong@example.com"))
+                .andExpect(jsonPath("$.data.role").value("STUDENT"))
+                .andExpect(jsonPath("$.data.memberId").isNumber());
     }
 
     @Test
     @DisplayName("회원가입 API - 유효성 검증 실패 (잘못된 이메일)")
-    void signUp_ValidationFailed_InvalidEmail() {
+    void signUp_ValidationFailed_InvalidEmail() throws Exception {
         // Given
         SignUpRequest request = createSignUpRequest("홍길동", "invalid-email", "01012345678", "Pass123", MemberRole.STUDENT);
+        String requestJson = objectMapper.writeValueAsString(request);
 
-        // When
-        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/auth/signup", 
-            request, 
-            ApiResponse.class);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isFalse();
-        assertThat(response.getBody().getError()).isNotNull();
+        // When & Then
+        mockMvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test
     @DisplayName("회원가입 API - 중복 이메일")
-    void signUp_DuplicateEmail() {
+    void signUp_DuplicateEmail() throws Exception {
         // Given
         SignUpRequest firstRequest = createSignUpRequest("홍길동", "hong@example.com", "01012345678", "Pass123", MemberRole.STUDENT);
         SignUpRequest duplicateRequest = createSignUpRequest("김철수", "hong@example.com", "01087654321", "Pass456", MemberRole.INSTRUCTOR);
 
-        // 첫 번째 회원가입
-        restTemplate.postForEntity("http://localhost:" + port + "/api/auth/signup", firstRequest, ApiResponse.class);
+        String firstRequestJson = objectMapper.writeValueAsString(firstRequest);
+        String duplicateRequestJson = objectMapper.writeValueAsString(duplicateRequest);
 
-        // When - 같은 이메일로 다시 회원가입
-        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/auth/signup", 
-            duplicateRequest, 
-            ApiResponse.class);
+        mockMvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(firstRequestJson))
+                .andExpect(status().isOk());
 
-        // Then
-        assertThat(response.getStatusCode()).isIn(HttpStatus.CONFLICT, HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isFalse();
-        assertThat(response.getBody().getError()).isNotNull();
+        // When & Then - 같은 이메일로 다시 회원가입
+        mockMvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(duplicateRequestJson))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test
     @DisplayName("로그인 API 성공")
-    void login_Success() {
+    void login_Success() throws Exception {
         // Given - 먼저 회원가입
         SignUpRequest signUpRequest = createSignUpRequest("홍길동", "hong@example.com", "01012345678", "Pass123", MemberRole.STUDENT);
-        restTemplate.postForEntity("http://localhost:" + port + "/api/auth/signup", signUpRequest, ApiResponse.class);
+        mockMvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(signUpRequest)))
+                .andExpect(status().isOk());
 
         LoginRequest loginRequest = createLoginRequest("hong@example.com", "Pass123");
+        String loginJson = objectMapper.writeValueAsString(loginRequest);
 
         // When
-        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/auth/login", 
-            loginRequest, 
-            ApiResponse.class);
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(loginJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").isString())
+                .andExpect(jsonPath("$.data.email").value("hong@example.com"))
+                .andExpect(jsonPath("$.data.name").value("홍길동"))
+                .andExpect(jsonPath("$.data.role").value("STUDENT"))
+                .andReturn();
 
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isTrue();
-        
-        @SuppressWarnings("unchecked")
-        var data = (java.util.Map<String, Object>) response.getBody().getData();
-        assertThat(data.get("accessToken")).isNotNull();
-        assertThat(data.get("email")).isEqualTo("hong@example.com");
-        assertThat(data.get("name")).isEqualTo("홍길동");
-        assertThat(data.get("role")).isEqualTo("STUDENT");
-
-        // 쿠키에 refresh token이 설정되었는지 확인
-        List<String> cookies = response.getHeaders().get(HttpHeaders.SET_COOKIE);
+        // Then - 쿠키에 refresh token이 설정되었는지 확인
+        List<String> cookies = result.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
         assertThat(cookies).isNotNull();
         assertThat(cookies).anyMatch(cookie -> cookie.contains("refreshToken="));
         assertThat(cookies).anyMatch(cookie -> cookie.contains("HttpOnly"));
@@ -140,173 +134,143 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("로그인 API - 잘못된 비밀번호")
-    void login_InvalidPassword() {
+    void login_InvalidPassword() throws Exception {
         // Given - 먼저 회원가입
         SignUpRequest signUpRequest = createSignUpRequest("홍길동", "hong@example.com", "01012345678", "Pass123", MemberRole.STUDENT);
-        restTemplate.postForEntity("http://localhost:" + port + "/api/auth/signup", signUpRequest, ApiResponse.class);
+        mockMvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(signUpRequest)))
+                .andExpect(status().isOk());
 
         LoginRequest loginRequest = createLoginRequest("hong@example.com", "WrongPassword");
 
-        // When
-        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/auth/login", 
-            loginRequest, 
-            ApiResponse.class);
-
-        // Then
-        // 실제로는 400 BAD_REQUEST가 반환됨 (비밀번호 정책 위반으로 인한 것으로 보임)
-        assertThat(response.getStatusCode()).isIn(HttpStatus.BAD_REQUEST, HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isFalse();
-        assertThat(response.getBody().getError()).isNotNull();
+        // When & Then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test
     @DisplayName("로그인 API - 존재하지 않는 이메일")
-    void login_EmailNotFound() {
+    void login_EmailNotFound() throws Exception {
         // Given
         LoginRequest loginRequest = createLoginRequest("notfound@example.com", "Pass123");
 
-        // When
-        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/auth/login", 
-            loginRequest, 
-            ApiResponse.class);
-
-        // Then
-        assertThat(response.getStatusCode()).isIn(HttpStatus.BAD_REQUEST, HttpStatus.UNAUTHORIZED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isFalse();
-        assertThat(response.getBody().getError()).isNotNull();
+        // When & Then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test
     @DisplayName("토큰 갱신 API 성공")
-    void refreshToken_Success() {
+    void refreshToken_Success() throws Exception {
         // Given - 회원가입 및 로그인하여 refresh token 획득
         SignUpRequest signUpRequest = createSignUpRequest("홍길동", "hong@example.com", "01012345678", "Pass123", MemberRole.STUDENT);
-        restTemplate.postForEntity("http://localhost:" + port + "/api/auth/signup", signUpRequest, ApiResponse.class);
+        mockMvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(signUpRequest)))
+                .andExpect(status().isOk());
 
         LoginRequest loginRequest = createLoginRequest("hong@example.com", "Pass123");
-        ResponseEntity<ApiResponse> loginResponse = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/auth/login", 
-            loginRequest, 
-            ApiResponse.class);
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
 
-        // 쿠키에서 refresh token 추출
-        String refreshTokenCookie = extractRefreshTokenFromCookies(loginResponse.getHeaders().get(HttpHeaders.SET_COOKIE));
-        
+        String refreshTokenValue = extractRefreshTokenValue(loginResult.getResponse().getHeaders(HttpHeaders.SET_COOKIE));
+        assertThat(refreshTokenValue).isNotEmpty();
+
         // When - refresh token으로 새로운 access token 발급
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Cookie", refreshTokenCookie);
-        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+        MvcResult refreshResult = mockMvc.perform(post("/api/auth/refresh")
+                .cookie(new Cookie("refreshToken", refreshTokenValue)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.accessToken").isString())
+                .andExpect(jsonPath("$.data.email").value("hong@example.com"))
+                .andReturn();
 
-        ResponseEntity<ApiResponse> response = restTemplate.exchange(
-            "http://localhost:" + port + "/api/auth/refresh", 
-            HttpMethod.POST, 
-            requestEntity, 
-            ApiResponse.class);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isTrue();
-        
-        @SuppressWarnings("unchecked")
-        var data = (java.util.Map<String, Object>) response.getBody().getData();
-        assertThat(data.get("accessToken")).isNotNull();
-        assertThat(data.get("email")).isEqualTo("hong@example.com");
-
-        // 새로운 refresh token이 쿠키에 설정되었는지 확인
-        List<String> cookies = response.getHeaders().get(HttpHeaders.SET_COOKIE);
+        // Then - 새로운 refresh token이 쿠키에 설정되었는지 확인
+        List<String> cookies = refreshResult.getResponse().getHeaders(HttpHeaders.SET_COOKIE);
         assertThat(cookies).isNotNull();
         assertThat(cookies).anyMatch(cookie -> cookie.contains("refreshToken="));
     }
 
     @Test
     @DisplayName("토큰 갱신 API - refresh token 없음")
-    void refreshToken_MissingToken() {
-        // When - refresh token 없이 요청
-        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/auth/refresh", 
-            null, 
-            ApiResponse.class);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isFalse();
-        assertThat(response.getBody().getError().getCode()).isEqualTo("REFRESH_TOKEN_MISSING");
-        assertThat(response.getBody().getError().getMessage()).isEqualTo("리프레시 토큰이 없습니다.");
+    void refreshToken_MissingToken() throws Exception {
+        // When & Then - refresh token 없이 요청
+        mockMvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("REFRESH_TOKEN_MISSING"))
+                .andExpect(jsonPath("$.error.message").value("리프레시 토큰이 없습니다."));
     }
 
     @Test
     @DisplayName("토큰 갱신 API - 유효하지 않은 refresh token")
-    void refreshToken_InvalidToken() {
+    void refreshToken_InvalidToken() throws Exception {
         // Given - 잘못된 refresh token
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Cookie", "refreshToken=invalid-token");
-        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+        Cookie invalidRefreshToken = new Cookie("refreshToken", "invalid-token");
 
-        // When
-        ResponseEntity<ApiResponse> response = restTemplate.exchange(
-            "http://localhost:" + port + "/api/auth/refresh", 
-            HttpMethod.POST, 
-            requestEntity, 
-            ApiResponse.class);
-
-        // Then
-        assertThat(response.getStatusCode()).isIn(HttpStatus.UNAUTHORIZED, HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isFalse();
-        assertThat(response.getBody().getError()).isNotNull();
+        // When & Then
+        mockMvc.perform(post("/api/auth/refresh")
+                .cookie(invalidRefreshToken))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test
     @DisplayName("회원가입 API - 유효성 검증 실패 (빈 이름)")
-    void signUp_ValidationFailed_EmptyName() {
+    void signUp_ValidationFailed_EmptyName() throws Exception {
         // Given
         SignUpRequest request = createSignUpRequest("", "hong@example.com", "01012345678", "Pass123", MemberRole.STUDENT);
 
-        // When
-        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/auth/signup", 
-            request, 
-            ApiResponse.class);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isFalse();
+        // When & Then
+        mockMvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
     @DisplayName("로그인 API - 유효성 검증 실패 (빈 이메일)")
-    void login_ValidationFailed_EmptyEmail() {
+    void login_ValidationFailed_EmptyEmail() throws Exception {
         // Given
         LoginRequest request = createLoginRequest("", "Pass123");
 
-        // When
-        ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
-            "http://localhost:" + port + "/api/auth/login", 
-            request, 
-            ApiResponse.class);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().isSuccess()).isFalse();
+        // When & Then
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     /**
-     * 쿠키에서 refresh token 추출
+     * Set-Cookie 헤더에서 refresh token 값 추출
      */
-    private String extractRefreshTokenFromCookies(List<String> cookies) {
-        if (cookies == null) return null;
-        
+    private String extractRefreshTokenValue(List<String> cookies) {
+        if (cookies == null) {
+            return null;
+        }
+
         for (String cookie : cookies) {
             if (cookie.startsWith("refreshToken=")) {
-                return cookie.split(";")[0]; // 첫 번째 부분만 반환 (refreshToken=value)
+                int endIndex = cookie.indexOf(';');
+                if (endIndex == -1) {
+                    endIndex = cookie.length();
+                }
+                return cookie.substring("refreshToken=".length(), endIndex);
             }
         }
         return null;
