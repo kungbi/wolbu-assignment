@@ -7,8 +7,8 @@ import com.company.wolbu.assignment.auth.domain.Member;
 import com.company.wolbu.assignment.auth.domain.MemberRole;
 import com.company.wolbu.assignment.auth.repository.MemberRepository;
 import com.company.wolbu.assignment.enrollment.exception.MemberNotFoundException;
-import com.company.wolbu.assignment.lecture.dto.CreateLectureRequest;
-import com.company.wolbu.assignment.lecture.dto.CreateLectureResponse;
+import com.company.wolbu.assignment.lecture.dto.CreateLectureRequestDto;
+import com.company.wolbu.assignment.lecture.dto.CreateLectureResponseDto;
 import com.company.wolbu.assignment.lecture.exception.InstructorOnlyException;
 import com.company.wolbu.assignment.lecture.exception.InvalidLectureDataException;
 import com.company.wolbu.assignment.lecture.exception.LectureNotFoundException;
@@ -55,10 +55,10 @@ class LectureServiceTest {
     @DisplayName("강사가 강의를 성공적으로 개설한다")
     void createLecture_instructor_success() {
         // Given
-        CreateLectureRequest request = new CreateLectureRequest("내집마련 기초반", 10, 200000);
+        CreateLectureRequestDto request = new CreateLectureRequestDto("내집마련 기초반", 10, 200000);
 
         // When
-        CreateLectureResponse response = lectureService.createLecture(instructorId, request);
+        CreateLectureResponseDto response = lectureService.createLecture(instructorId, request);
 
         // Then
         assertThat(response).isNotNull();
@@ -74,12 +74,11 @@ class LectureServiceTest {
     @DisplayName("수강생은 강의를 개설할 수 없다")
     void createLecture_student_fails() {
         // Given
-        CreateLectureRequest request = new CreateLectureRequest("내집마련 기초반", 10, 200000);
+        CreateLectureRequestDto request = new CreateLectureRequestDto("내집마련 기초반", 10, 200000);
 
         // When & Then
-        assertThatThrownBy(() -> lectureService.createLecture(studentId, request))
-                .isInstanceOf(InstructorOnlyException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "INSTRUCTOR_ONLY")
+        assertThatThrownBy(() -> lectureService.createLecture(studentId, request)).isInstanceOf(
+                        InstructorOnlyException.class).hasFieldOrPropertyWithValue("errorCode", "INSTRUCTOR_ONLY")
                 .hasMessageContaining("강의는 강사만 개설할 수 있습니다");
     }
 
@@ -88,12 +87,11 @@ class LectureServiceTest {
     void createLecture_nonexistent_member_fails() {
         // Given
         Long nonExistentMemberId = 99999L;
-        CreateLectureRequest request = new CreateLectureRequest("내집마련 기초반", 10, 200000);
+        CreateLectureRequestDto request = new CreateLectureRequestDto("내집마련 기초반", 10, 200000);
 
         // When & Then
-        assertThatThrownBy(() -> lectureService.createLecture(nonExistentMemberId, request))
-                .isInstanceOf(MemberNotFoundException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "MEMBER_NOT_FOUND")
+        assertThatThrownBy(() -> lectureService.createLecture(nonExistentMemberId, request)).isInstanceOf(
+                        MemberNotFoundException.class).hasFieldOrPropertyWithValue("errorCode", "MEMBER_NOT_FOUND")
                 .hasMessageContaining("회원을 찾을 수 없습니다");
     }
 
@@ -101,39 +99,36 @@ class LectureServiceTest {
     @DisplayName("유효하지 않은 강의 정보로는 강의를 개설할 수 없다")
     void createLecture_invalid_data_fails() {
         // Given - 빈 제목
-        CreateLectureRequest requestWithEmptyTitle = new CreateLectureRequest("", 10, 200000);
+        CreateLectureRequestDto requestWithEmptyTitle = new CreateLectureRequestDto("", 10, 200000);
 
         // When & Then
-        assertThatThrownBy(() -> lectureService.createLecture(instructorId, requestWithEmptyTitle))
-                .isInstanceOf(InvalidLectureDataException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "INVALID_LECTURE_DATA");
+        assertThatThrownBy(() -> lectureService.createLecture(instructorId, requestWithEmptyTitle)).isInstanceOf(
+                InvalidLectureDataException.class).hasFieldOrPropertyWithValue("errorCode", "INVALID_LECTURE_DATA");
 
         // Given - 0명 정원
-        CreateLectureRequest requestWithZeroCapacity = new CreateLectureRequest("강의명", 0, 200000);
+        CreateLectureRequestDto requestWithZeroCapacity = new CreateLectureRequestDto("강의명", 0, 200000);
 
         // When & Then
-        assertThatThrownBy(() -> lectureService.createLecture(instructorId, requestWithZeroCapacity))
-                .isInstanceOf(InvalidLectureDataException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "INVALID_LECTURE_DATA");
+        assertThatThrownBy(() -> lectureService.createLecture(instructorId, requestWithZeroCapacity)).isInstanceOf(
+                InvalidLectureDataException.class).hasFieldOrPropertyWithValue("errorCode", "INVALID_LECTURE_DATA");
 
         // Given - 음수 가격
-        CreateLectureRequest requestWithNegativePrice = new CreateLectureRequest("강의명", 10, -1000);
+        CreateLectureRequestDto requestWithNegativePrice = new CreateLectureRequestDto("강의명", 10, -1000);
 
         // When & Then
-        assertThatThrownBy(() -> lectureService.createLecture(instructorId, requestWithNegativePrice))
-                .isInstanceOf(InvalidLectureDataException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "INVALID_LECTURE_DATA");
+        assertThatThrownBy(() -> lectureService.createLecture(instructorId, requestWithNegativePrice)).isInstanceOf(
+                InvalidLectureDataException.class).hasFieldOrPropertyWithValue("errorCode", "INVALID_LECTURE_DATA");
     }
 
     @Test
     @DisplayName("강의 정보를 성공적으로 조회한다")
     void getLecture_success() {
         // Given
-        CreateLectureRequest request = new CreateLectureRequest("내집마련 기초반", 10, 200000);
-        CreateLectureResponse createdLecture = lectureService.createLecture(instructorId, request);
+        CreateLectureRequestDto request = new CreateLectureRequestDto("내집마련 기초반", 10, 200000);
+        CreateLectureResponseDto createdLecture = lectureService.createLecture(instructorId, request);
 
         // When
-        CreateLectureResponse response = lectureService.getLecture(createdLecture.getId());
+        CreateLectureResponseDto response = lectureService.getLecture(createdLecture.getId());
 
         // Then
         assertThat(response).isNotNull();
@@ -151,9 +146,8 @@ class LectureServiceTest {
         Long nonExistentLectureId = 99999L;
 
         // When & Then
-        assertThatThrownBy(() -> lectureService.getLecture(nonExistentLectureId))
-                .isInstanceOf(LectureNotFoundException.class)
-                .hasFieldOrPropertyWithValue("errorCode", "LECTURE_NOT_FOUND")
+        assertThatThrownBy(() -> lectureService.getLecture(nonExistentLectureId)).isInstanceOf(
+                        LectureNotFoundException.class).hasFieldOrPropertyWithValue("errorCode", "LECTURE_NOT_FOUND")
                 .hasMessageContaining("강의를 찾을 수 없습니다");
     }
 
@@ -161,8 +155,8 @@ class LectureServiceTest {
     @DisplayName("강사의 강의 권한을 확인한다")
     void hasInstructorPermission_success() {
         // Given
-        CreateLectureRequest request = new CreateLectureRequest("내집마련 기초반", 10, 200000);
-        CreateLectureResponse createdLecture = lectureService.createLecture(instructorId, request);
+        CreateLectureRequestDto request = new CreateLectureRequestDto("내집마련 기초반", 10, 200000);
+        CreateLectureResponseDto createdLecture = lectureService.createLecture(instructorId, request);
 
         // When & Then
         assertThat(lectureService.hasInstructorPermission(createdLecture.getId(), instructorId)).isTrue();

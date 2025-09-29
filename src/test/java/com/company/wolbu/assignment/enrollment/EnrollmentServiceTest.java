@@ -9,13 +9,13 @@ import com.company.wolbu.assignment.auth.domain.Member;
 import com.company.wolbu.assignment.auth.domain.MemberRole;
 import com.company.wolbu.assignment.auth.repository.MemberRepository;
 import com.company.wolbu.assignment.enrollment.domain.Enrollment;
-import com.company.wolbu.assignment.enrollment.dto.EnrollmentRequest;
-import com.company.wolbu.assignment.enrollment.dto.EnrollmentResult;
-import com.company.wolbu.assignment.enrollment.exception.MemberNotFoundException;
-import com.company.wolbu.assignment.enrollment.exception.EnrollmentNotFoundException;
-import com.company.wolbu.assignment.enrollment.exception.UnauthorizedEnrollmentException;
+import com.company.wolbu.assignment.enrollment.dto.EnrollmentRequestDto;
+import com.company.wolbu.assignment.enrollment.dto.EnrollmentResponseDto;
+import com.company.wolbu.assignment.enrollment.dto.EnrollmentResultDto;
 import com.company.wolbu.assignment.enrollment.exception.AlreadyCanceledException;
-import com.company.wolbu.assignment.enrollment.dto.EnrollmentResponse;
+import com.company.wolbu.assignment.enrollment.exception.EnrollmentNotFoundException;
+import com.company.wolbu.assignment.enrollment.exception.MemberNotFoundException;
+import com.company.wolbu.assignment.enrollment.exception.UnauthorizedEnrollmentException;
 import com.company.wolbu.assignment.enrollment.repository.EnrollmentRepository;
 import com.company.wolbu.assignment.enrollment.service.EnrollmentService;
 import com.company.wolbu.assignment.lecture.domain.Lecture;
@@ -63,7 +63,7 @@ class EnrollmentServiceTest {
         // Given
         Long memberId = 1L;
         Long lectureId = 1L;
-        EnrollmentRequest request = new EnrollmentRequest(List.of(lectureId));
+        EnrollmentRequestDto request = new EnrollmentRequestDto(List.of(lectureId));
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(testMember));
         when(lectureRepository.findByIdWithLock(lectureId)).thenReturn(Optional.of(testLecture));
@@ -77,7 +77,7 @@ class EnrollmentServiceTest {
         });
 
         // When
-        EnrollmentResult result = enrollmentService.enrollInLectures(memberId, request);
+        EnrollmentResultDto result = enrollmentService.enrollInLectures(memberId, request);
 
         // Then
         assertThat(result.getSuccessCount()).isEqualTo(1);
@@ -92,7 +92,7 @@ class EnrollmentServiceTest {
         // Given
         Long memberId = 1L;
         Long lectureId = 1L;
-        EnrollmentRequest request = new EnrollmentRequest(List.of(lectureId));
+        EnrollmentRequestDto request = new EnrollmentRequestDto(List.of(lectureId));
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(testMember));
         when(lectureRepository.findByIdWithLock(lectureId)).thenReturn(Optional.of(testLecture));
@@ -102,7 +102,7 @@ class EnrollmentServiceTest {
         when(enrollmentRepository.countActiveByLectureId(lectureId)).thenReturn(10L);
 
         // When
-        EnrollmentResult result = enrollmentService.enrollInLectures(memberId, request);
+        EnrollmentResultDto result = enrollmentService.enrollInLectures(memberId, request);
 
         // Then
         assertThat(result.getSuccessCount()).isEqualTo(0);
@@ -117,7 +117,7 @@ class EnrollmentServiceTest {
         // Given
         Long memberId = 1L;
         Long lectureId = 1L;
-        EnrollmentRequest request = new EnrollmentRequest(List.of(lectureId));
+        EnrollmentRequestDto request = new EnrollmentRequestDto(List.of(lectureId));
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.of(testMember));
         // 이미 신청한 상태
@@ -126,7 +126,7 @@ class EnrollmentServiceTest {
         when(enrollmentRepository.existsActiveByLectureIdAndMemberId(lectureId, memberId)).thenReturn(true);
 
         // When
-        EnrollmentResult result = enrollmentService.enrollInLectures(memberId, request);
+        EnrollmentResultDto result = enrollmentService.enrollInLectures(memberId, request);
 
         // Then
         assertThat(result.getSuccessCount()).isEqualTo(0);
@@ -140,14 +140,13 @@ class EnrollmentServiceTest {
     void enrollInLectures_MemberNotFound() {
         // Given
         Long memberId = 999L;
-        EnrollmentRequest request = new EnrollmentRequest(List.of(1L));
+        EnrollmentRequestDto request = new EnrollmentRequestDto(List.of(1L));
 
         when(memberRepository.findById(memberId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> enrollmentService.enrollInLectures(memberId, request))
-                .isInstanceOf(MemberNotFoundException.class)
-                .hasMessage("회원을 찾을 수 없습니다. (ID: 999)");
+        assertThatThrownBy(() -> enrollmentService.enrollInLectures(memberId, request)).isInstanceOf(
+                MemberNotFoundException.class).hasMessage("회원을 찾을 수 없습니다. (ID: 999)");
     }
 
     @Test
@@ -157,7 +156,7 @@ class EnrollmentServiceTest {
         Long memberId = 1L;
         Long lectureId1 = 1L; // 성공할 강의
         Long lectureId2 = 2L; // 정원 초과로 실패할 강의
-        EnrollmentRequest request = new EnrollmentRequest(List.of(lectureId1, lectureId2));
+        EnrollmentRequestDto request = new EnrollmentRequestDto(List.of(lectureId1, lectureId2));
 
         Lecture fullLecture = Lecture.create("정원 초과 강의", 5, 30000, 1L);
 
@@ -181,7 +180,7 @@ class EnrollmentServiceTest {
         });
 
         // When
-        EnrollmentResult result = enrollmentService.enrollInLectures(memberId, request);
+        EnrollmentResultDto result = enrollmentService.enrollInLectures(memberId, request);
 
         // Then
         assertThat(result.getTotalRequested()).isEqualTo(2);
@@ -198,7 +197,7 @@ class EnrollmentServiceTest {
         // Given
         Long memberId = 1L;
         Long lectureId = 1L;
-        EnrollmentRequest request = new EnrollmentRequest(List.of(lectureId));
+        EnrollmentRequestDto request = new EnrollmentRequestDto(List.of(lectureId));
 
         // 기존 취소된 수강 신청 생성
         Enrollment canceledEnrollment = Enrollment.create(lectureId, memberId);
@@ -208,12 +207,12 @@ class EnrollmentServiceTest {
         when(lectureRepository.findByIdWithLock(lectureId)).thenReturn(Optional.of(testLecture));
         when(enrollmentRepository.existsActiveByLectureIdAndMemberId(lectureId, memberId)).thenReturn(false);
         when(enrollmentRepository.countActiveByLectureId(lectureId)).thenReturn(5L);
-        when(enrollmentRepository.findByLectureIdAndMemberId(lectureId, memberId))
-                .thenReturn(Optional.of(canceledEnrollment));
+        when(enrollmentRepository.findByLectureIdAndMemberId(lectureId, memberId)).thenReturn(
+                Optional.of(canceledEnrollment));
         when(enrollmentRepository.save(any(Enrollment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        EnrollmentResult result = enrollmentService.enrollInLectures(memberId, request);
+        EnrollmentResultDto result = enrollmentService.enrollInLectures(memberId, request);
 
         // Then
         assertThat(result.getSuccessCount()).isEqualTo(1);
@@ -233,9 +232,9 @@ class EnrollmentServiceTest {
         Long memberId = 1L;
         Long enrollmentId = 100L;
         Long lectureId = 1L;
-        
+
         Enrollment activeEnrollment = Enrollment.create(lectureId, memberId);
-        
+
         when(enrollmentRepository.findById(enrollmentId)).thenReturn(Optional.of(activeEnrollment));
         when(lectureRepository.findByIdWithLock(lectureId)).thenReturn(Optional.of(testLecture));
         when(enrollmentRepository.save(any(Enrollment.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -258,9 +257,8 @@ class EnrollmentServiceTest {
         when(enrollmentRepository.findById(enrollmentId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> enrollmentService.cancelEnrollment(memberId, enrollmentId))
-                .isInstanceOf(EnrollmentNotFoundException.class)
-                .hasMessage("수강 신청을 찾을 수 없습니다. (ID: 999)");
+        assertThatThrownBy(() -> enrollmentService.cancelEnrollment(memberId, enrollmentId)).isInstanceOf(
+                EnrollmentNotFoundException.class).hasMessage("수강 신청을 찾을 수 없습니다. (ID: 999)");
     }
 
     @Test
@@ -271,15 +269,14 @@ class EnrollmentServiceTest {
         Long actualMemberId = 2L;
         Long enrollmentId = 100L;
         Long lectureId = 1L;
-        
+
         Enrollment otherMemberEnrollment = Enrollment.create(lectureId, actualMemberId);
 
         when(enrollmentRepository.findById(enrollmentId)).thenReturn(Optional.of(otherMemberEnrollment));
 
         // When & Then
-        assertThatThrownBy(() -> enrollmentService.cancelEnrollment(requestMemberId, enrollmentId))
-                .isInstanceOf(UnauthorizedEnrollmentException.class)
-                .hasMessage("본인의 수강 신청만 취소할 수 있습니다.");
+        assertThatThrownBy(() -> enrollmentService.cancelEnrollment(requestMemberId, enrollmentId)).isInstanceOf(
+                UnauthorizedEnrollmentException.class).hasMessage("본인의 수강 신청만 취소할 수 있습니다.");
     }
 
     @Test
@@ -289,16 +286,15 @@ class EnrollmentServiceTest {
         Long memberId = 1L;
         Long enrollmentId = 100L;
         Long lectureId = 1L;
-        
+
         Enrollment canceledEnrollment = Enrollment.create(lectureId, memberId);
         canceledEnrollment.cancel(); // 미리 취소 상태로 변경
 
         when(enrollmentRepository.findById(enrollmentId)).thenReturn(Optional.of(canceledEnrollment));
 
         // When & Then
-        assertThatThrownBy(() -> enrollmentService.cancelEnrollment(memberId, enrollmentId))
-                .isInstanceOf(AlreadyCanceledException.class)
-                .hasMessage("이미 취소된 수강 신청입니다. (수강 신청 ID: 100)");
+        assertThatThrownBy(() -> enrollmentService.cancelEnrollment(memberId, enrollmentId)).isInstanceOf(
+                AlreadyCanceledException.class).hasMessage("이미 취소된 수강 신청입니다. (수강 신청 ID: 100)");
     }
 
     @Test
@@ -308,20 +304,21 @@ class EnrollmentServiceTest {
         Long memberId = 1L;
         Long lectureId1 = 1L;
         Long lectureId2 = 2L;
-        
+
         Enrollment enrollment1 = Enrollment.create(lectureId1, memberId);
         Enrollment enrollment2 = Enrollment.create(lectureId2, memberId);
-        
+
         Lecture lecture2 = Lecture.create("두 번째 강의", 20, 60000, 1L);
 
         when(memberRepository.existsById(memberId)).thenReturn(true);
-        when(enrollmentRepository.findByMemberIdAndStatus(memberId, com.company.wolbu.assignment.enrollment.domain.EnrollmentStatus.CONFIRMED))
-                .thenReturn(List.of(enrollment1, enrollment2));
+        when(enrollmentRepository.findByMemberIdAndStatus(memberId,
+                com.company.wolbu.assignment.enrollment.domain.EnrollmentStatus.CONFIRMED)).thenReturn(
+                List.of(enrollment1, enrollment2));
         when(lectureRepository.findById(lectureId1)).thenReturn(Optional.of(testLecture));
         when(lectureRepository.findById(lectureId2)).thenReturn(Optional.of(lecture2));
 
         // When
-        List<EnrollmentResponse> result = enrollmentService.getEnrollmentsByMember(memberId);
+        List<EnrollmentResponseDto> result = enrollmentService.getEnrollmentsByMember(memberId);
 
         // Then
         assertThat(result).hasSize(2);
@@ -329,7 +326,7 @@ class EnrollmentServiceTest {
         assertThat(result.get(0).getLectureTitle()).isEqualTo("테스트 강의");
         assertThat(result.get(0).getMemberId()).isEqualTo(memberId);
         assertThat(result.get(0).getStatus()).isEqualTo("CONFIRMED");
-        
+
         assertThat(result.get(1).getLectureId()).isEqualTo(lectureId2);
         assertThat(result.get(1).getLectureTitle()).isEqualTo("두 번째 강의");
         assertThat(result.get(1).getMemberId()).isEqualTo(memberId);
@@ -345,9 +342,8 @@ class EnrollmentServiceTest {
         when(memberRepository.existsById(memberId)).thenReturn(false);
 
         // When & Then
-        assertThatThrownBy(() -> enrollmentService.getEnrollmentsByMember(memberId))
-                .isInstanceOf(MemberNotFoundException.class)
-                .hasMessage("회원을 찾을 수 없습니다. (ID: 999)");
+        assertThatThrownBy(() -> enrollmentService.getEnrollmentsByMember(memberId)).isInstanceOf(
+                MemberNotFoundException.class).hasMessage("회원을 찾을 수 없습니다. (ID: 999)");
     }
 
     @Test
@@ -357,11 +353,11 @@ class EnrollmentServiceTest {
         Long memberId = 1L;
 
         when(memberRepository.existsById(memberId)).thenReturn(true);
-        when(enrollmentRepository.findByMemberIdAndStatus(memberId, com.company.wolbu.assignment.enrollment.domain.EnrollmentStatus.CONFIRMED))
-                .thenReturn(List.of());
+        when(enrollmentRepository.findByMemberIdAndStatus(memberId,
+                com.company.wolbu.assignment.enrollment.domain.EnrollmentStatus.CONFIRMED)).thenReturn(List.of());
 
         // When
-        List<EnrollmentResponse> result = enrollmentService.getEnrollmentsByMember(memberId);
+        List<EnrollmentResponseDto> result = enrollmentService.getEnrollmentsByMember(memberId);
 
         // Then
         assertThat(result).isEmpty();
