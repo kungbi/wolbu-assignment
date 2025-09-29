@@ -22,15 +22,15 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 강의 신청 동시성 테스트
  */
 @SpringBootTest
 @ActiveProfiles("test")
-@Transactional
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class EnrollmentIntegrationTest {
 
     @Autowired
@@ -201,6 +201,8 @@ class EnrollmentIntegrationTest {
         Lecture savedLecture1 = lectureRepository.saveAndFlush(lecture1);
         Lecture savedLecture2 = lectureRepository.saveAndFlush(lecture2);
         Lecture savedLecture3 = lectureRepository.saveAndFlush(lecture3);
+        System.out.println("Saved Lecture IDs: " + savedLecture1.getId() + ", " + savedLecture2.getId() + ", "
+                           + savedLecture3.getId());
 
         // 강의 신청
         EnrollmentRequestDto request1 = new EnrollmentRequestDto(List.of(savedLecture1.getId()));

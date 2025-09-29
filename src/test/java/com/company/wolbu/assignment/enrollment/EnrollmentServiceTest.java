@@ -304,18 +304,15 @@ class EnrollmentServiceTest {
         Long memberId = 1L;
         Long lectureId1 = 1L;
         Long lectureId2 = 2L;
-
-        Enrollment enrollment1 = Enrollment.create(lectureId1, memberId);
-        Enrollment enrollment2 = Enrollment.create(lectureId2, memberId);
-
         Lecture lecture2 = Lecture.create("두 번째 강의", 20, 60000, 1L);
+
+        Enrollment enrollment1 = Enrollment.createWithLecture(lectureId1, memberId, testLecture);
+        Enrollment enrollment2 = Enrollment.createWithLecture(lectureId2, memberId, lecture2);
 
         when(memberRepository.existsById(memberId)).thenReturn(true);
         when(enrollmentRepository.findByMemberIdAndStatus(memberId,
                 com.company.wolbu.assignment.enrollment.domain.EnrollmentStatus.CONFIRMED)).thenReturn(
                 List.of(enrollment1, enrollment2));
-        when(lectureRepository.findById(lectureId1)).thenReturn(Optional.of(testLecture));
-        when(lectureRepository.findById(lectureId2)).thenReturn(Optional.of(lecture2));
 
         // When
         List<EnrollmentResponseDto> result = enrollmentService.getEnrollmentsByMember(memberId);

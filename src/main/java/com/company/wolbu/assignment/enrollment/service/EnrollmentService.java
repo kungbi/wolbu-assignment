@@ -49,8 +49,7 @@ public class EnrollmentService {
         log.info("강의 신청 요청: memberId={}, lectureIds={}", memberId, request.getLectureIds());
 
         // 1. 회원 존재 확인
-        memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberNotFoundException(memberId));
+        memberRepository.findById(memberId).orElseThrow(() -> new MemberNotFoundException(memberId));
 
         List<EnrollmentResponseDto> successfulEnrollments = new ArrayList<>();
         List<EnrollmentResultDto.EnrollmentFailure> failedEnrollments = new ArrayList<>();
@@ -72,11 +71,10 @@ public class EnrollmentService {
                         .orElseThrow(() -> new LectureNotFoundException(lectureId));
                 String lectureTitle = lecture.getTitle();
 
-                failedEnrollments.add(new EnrollmentResultDto.EnrollmentFailure(
-                        lectureId, lectureTitle, e.errorCode(), e.getMessage()));
+                failedEnrollments.add(new EnrollmentResultDto.EnrollmentFailure(lectureId, lectureTitle, e.errorCode(),
+                        e.getMessage()));
 
-                log.warn("강의 신청 실패: memberId={}, lectureId={}, error={}",
-                        memberId, lectureId, e.getMessage());
+                log.warn("강의 신청 실패: memberId={}, lectureId={}, error={}", memberId, lectureId, e.getMessage());
             }
         }
 
@@ -117,33 +115,20 @@ public class EnrollmentService {
             if (enrollment.isCanceled()) {
                 enrollment.reactivate();
                 enrollment = enrollmentRepository.save(enrollment);
-                log.info("기존 취소 신청 재활성화: enrollmentId={}, memberId={}, lectureId={}",
-                        enrollment.getId(), memberId, lectureId);
+                log.info("기존 취소 신청 재활성화: enrollmentId={}, memberId={}, lectureId={}", enrollment.getId(), memberId,
+                        lectureId);
             }
-            return new EnrollmentResponseDto(
-                    enrollment.getId(),
-                    enrollment.getLectureId(),
-                    lecture.getTitle(),
-                    enrollment.getMemberId(),
-                    enrollment.getStatus().name(),
-                    enrollment.getCreatedAt()
-            );
+            return new EnrollmentResponseDto(enrollment.getId(), enrollment.getLectureId(), lecture.getTitle(),
+                    enrollment.getMemberId(), enrollment.getStatus().name(), enrollment.getCreatedAt());
         }
 
         // 새로운 신청 생성
         enrollment = Enrollment.create(lectureId, memberId);
         enrollment = enrollmentRepository.save(enrollment);
-        log.info("새로운 수강 신청 생성: enrollmentId={}, memberId={}, lectureId={}",
-                enrollment.getId(), memberId, lectureId);
+        log.info("새로운 수강 신청 생성: enrollmentId={}, memberId={}, lectureId={}", enrollment.getId(), memberId, lectureId);
 
-        return new EnrollmentResponseDto(
-                enrollment.getId(),
-                enrollment.getLectureId(),
-                lecture.getTitle(),
-                enrollment.getMemberId(),
-                enrollment.getStatus().name(),
-                enrollment.getCreatedAt()
-        );
+        return new EnrollmentResponseDto(enrollment.getId(), enrollment.getLectureId(), lecture.getTitle(),
+                enrollment.getMemberId(), enrollment.getStatus().name(), enrollment.getCreatedAt());
     }
 
     /**
@@ -161,24 +146,22 @@ public class EnrollmentService {
             throw new MemberNotFoundException(memberId);
         }
 
-        List<Enrollment> enrollments = enrollmentRepository.findByMemberIdAndStatus(
-                memberId, EnrollmentStatus.CONFIRMED);
+        List<Enrollment> enrollments = enrollmentRepository.findByMemberIdAndStatus(memberId,
+                EnrollmentStatus.CONFIRMED);
 
-        return enrollments.stream()
-                .map(enrollment -> {
-                    Lecture lecture = lectureRepository.findById(enrollment.getLectureId())
-                            .orElseThrow(() -> new LectureNotFoundException());
+        List<EnrollmentResponseDto> enrollmentResponseDtos = new ArrayList<>();
+        for (Enrollment enrollment : enrollments) {
+            Lecture lecture = enrollment.getLecture();
+            if (lecture == null) {
+                throw new LectureNotFoundException(enrollment.getLectureId());
+            }
 
-                    return new EnrollmentResponseDto(
-                            enrollment.getId(),
-                            enrollment.getLectureId(),
-                            lecture.getTitle(),
-                            enrollment.getMemberId(),
-                            enrollment.getStatus().name(),
-                            enrollment.getCreatedAt()
-                    );
-                })
-                .toList();
+            EnrollmentResponseDto apply = new EnrollmentResponseDto(enrollment.getId(), enrollment.getLectureId(),
+                    lecture.getTitle(), enrollment.getMemberId(), enrollment.getStatus().name(),
+                    enrollment.getCreatedAt());
+            enrollmentResponseDtos.add(apply);
+        }
+        return enrollmentResponseDtos;
     }
 
     /**
@@ -212,7 +195,7 @@ public class EnrollmentService {
         enrollment.cancel();
         enrollmentRepository.save(enrollment);
 
-        log.info("수강 신청 취소 완료: enrollmentId={}, memberId={}, lectureId={}",
-                enrollmentId, memberId, enrollment.getLectureId());
+        log.info("수강 신청 취소 완료: enrollmentId={}, memberId={}, lectureId={}", enrollmentId, memberId,
+                enrollment.getLectureId());
     }
 }

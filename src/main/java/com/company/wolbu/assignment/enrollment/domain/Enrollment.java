@@ -6,15 +6,21 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import com.company.wolbu.assignment.lecture.domain.Lecture;
 
 /**
  * 수강 신청 도메인 엔티티
@@ -43,6 +49,11 @@ public class Enrollment {
 
     @Column(name = "lecture_id", nullable = false)
     private Long lectureId;
+
+    // Read-only association used for join fetches (insert/update handled via lectureId field)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lecture_id", nullable = false, insertable = false, updatable = false)
+    private Lecture lecture;
 
     @Column(name = "member_id", nullable = false)
     private Long memberId;
@@ -77,6 +88,20 @@ public class Enrollment {
         enrollment.status = EnrollmentStatus.CONFIRMED;
         enrollment.createdAt = LocalDateTime.now();
         enrollment.updatedAt = LocalDateTime.now();
+        return enrollment;
+    }
+
+    public static Enrollment createWithLecture(Long lectureId, Long memberId, Lecture lecture) {
+        validateLectureId(lectureId);
+        validateMemberId(memberId);
+
+        Enrollment enrollment = new Enrollment();
+        enrollment.lectureId = lectureId;
+        enrollment.memberId = memberId;
+        enrollment.status = EnrollmentStatus.CONFIRMED;
+        enrollment.createdAt = LocalDateTime.now();
+        enrollment.updatedAt = LocalDateTime.now();
+        enrollment.lecture = lecture; // 연관 관계 설정
         return enrollment;
     }
 

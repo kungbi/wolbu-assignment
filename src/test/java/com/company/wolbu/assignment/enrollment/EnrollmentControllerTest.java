@@ -63,7 +63,10 @@ class EnrollmentControllerTest {
     private Long otherStudentId;
     private Long lectureIdA;
     private Long lectureIdB;
+    private Lecture lectureA;
+    private Lecture lectureB;
     private Long lectureIdLimited;
+    private Lecture lectureLimited;
     private String studentToken;
 
     @BeforeEach
@@ -81,9 +84,9 @@ class EnrollmentControllerTest {
                 Member.create("다른수강생", "other@student.com", "010-2222-2222", "hashedPassword", MemberRole.STUDENT));
         otherStudentId = otherStudent.getId();
 
-        Lecture lectureA = lectureRepository.save(Lecture.create("내집마련 기초", 5, 200000, instructorId));
-        Lecture lectureB = lectureRepository.save(Lecture.create("부동산 실전", 5, 250000, instructorId));
-        Lecture lectureLimited = lectureRepository.save(Lecture.create("정원 제한 강의", 1, 100000, instructorId));
+        lectureA = lectureRepository.save(Lecture.create("내집마련 기초", 5, 200000, instructorId));
+        lectureB = lectureRepository.save(Lecture.create("부동산 실전", 5, 250000, instructorId));
+        lectureLimited = lectureRepository.save(Lecture.create("정원 제한 강의", 1, 100000, instructorId));
 
         lectureIdA = lectureA.getId();
         lectureIdB = lectureB.getId();
@@ -129,8 +132,8 @@ class EnrollmentControllerTest {
     @Test
     @DisplayName("내 수강 신청 목록을 조회한다")
     void getMyEnrollments_success() throws Exception {
-        enrollmentRepository.save(Enrollment.create(lectureIdA, studentId));
-        enrollmentRepository.save(Enrollment.create(lectureIdB, studentId));
+        enrollmentRepository.save(Enrollment.createWithLecture(lectureIdA, studentId, lectureA));
+        enrollmentRepository.save(Enrollment.createWithLecture(lectureIdB, studentId, lectureB));
 
         mockMvc.perform(get("/api/enrollments/my").header("Authorization", "Bearer " + studentToken))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
