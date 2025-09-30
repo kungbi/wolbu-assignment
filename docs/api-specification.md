@@ -93,8 +93,7 @@
 		"name": "홍길동",
 		"email": "hong@example.com",
 		"phone": "01012345678",
-		"role": "STUDENT",
-		"createdAt": "2024-01-15T10:30:00"
+		"role": "STUDENT"
 	},
 	"error": null
 }
@@ -387,8 +386,6 @@ Authorization: Bearer {accessToken}
 {
 	"success": true,
 	"data": {
-		"successCount": 2,
-		"failedCount": 1,
 		"successfulEnrollments": [
 			{
 				"enrollmentId": 1,
@@ -408,7 +405,10 @@ Authorization: Bearer {accessToken}
 				"errorCode": "COURSE_FULL",
 				"errorMessage": "정원이 초과되었습니다."
 			}
-		]
+		],
+		"totalRequested": 3,
+		"successCount": 2,
+		"failedCount": 1
 	},
 	"error": null
 }
